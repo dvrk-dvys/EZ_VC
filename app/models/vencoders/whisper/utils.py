@@ -46,9 +46,7 @@ def compression_ratio(text) -> float:
     return len(text_bytes) / len(zlib.compress(text_bytes))
 
 
-def format_timestamp(
-    seconds: float, always_include_hours: bool = False, decimal_marker: str = "."
-):
+def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = "."):
     assert seconds >= 0, "non-negative timestamp expected"
     milliseconds = round(seconds * 1000.0)
 
@@ -62,9 +60,7 @@ def format_timestamp(
     milliseconds -= seconds * 1_000
 
     hours_marker = f"{hours:02d}:" if always_include_hours or hours > 0 else ""
-    return (
-        f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
-    )
+    return f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
 
 
 class ResultWriter:
@@ -75,9 +71,7 @@ class ResultWriter:
 
     def __call__(self, result: dict, audio_path: str):
         audio_basename = os.path.basename(audio_path)
-        output_path = os.path.join(
-            self.output_dir, audio_basename + "." + self.extension
-        )
+        output_path = os.path.join(self.output_dir, audio_basename + "." + self.extension)
 
         with open(output_path, "w", encoding="utf-8") as f:
             self.write_result(result, file=f)
@@ -152,13 +146,7 @@ class WriteJSON(ResultWriter):
 
 
 def get_writer(output_format: str, output_dir: str) -> Callable[[dict, TextIO], None]:
-    writers = {
-        "txt": WriteTXT,
-        "vtt": WriteVTT,
-        "srt": WriteSRT,
-        "tsv": WriteTSV,
-        "json": WriteJSON,
-    }
+    writers = {"txt": WriteTXT, "vtt": WriteVTT, "srt": WriteSRT, "tsv": WriteTSV, "json": WriteJSON}
 
     if output_format == "all":
         all_writers = [writer(output_dir) for writer in writers.values()]

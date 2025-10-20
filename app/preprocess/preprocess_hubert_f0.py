@@ -42,11 +42,7 @@ def process_one(filename, hmodel, f0p, device, diff=False, mel_extractor=None):
     f0_path = filename + ".f0.npy"
     if not os.path.exists(f0_path):
         f0_predictor = utils.get_f0_predictor(
-            f0p,
-            sampling_rate=sampling_rate,
-            hop_length=hop_length,
-            device=None,
-            threshold=0.05,
+            f0p, sampling_rate=sampling_rate, hop_length=hop_length, device=None, threshold=0.05
         )
         f0, uv = f0_predictor.compute_f0_uv(wav)
         np.save(f0_path, np.asanyarray((f0, uv), dtype=object))
@@ -58,9 +54,7 @@ def process_one(filename, hmodel, f0p, device, diff=False, mel_extractor=None):
         # because load_wav_to_torch return a tensor that need to be normalized
 
         if sr != hps.data.sampling_rate:
-            raise ValueError(
-                "{} SR doesn't match target {} SR".format(sr, hps.data.sampling_rate)
-            )
+            raise ValueError("{} SR doesn't match target {} SR".format(sr, hps.data.sampling_rate))
 
         # audio_norm = audio / hps.data.max_wav_value
 
@@ -95,9 +89,7 @@ def process_one(filename, hmodel, f0p, device, diff=False, mel_extractor=None):
         log10_vol_shift = random.uniform(-1, max_shift)
         keyshift = random.uniform(-5, 5)
         if mel_extractor is not None:
-            aug_mel_t = mel_extractor.extract(
-                audio_norm * (10**log10_vol_shift), sampling_rate, keyshift=keyshift
-            )
+            aug_mel_t = mel_extractor.extract(audio_norm * (10**log10_vol_shift), sampling_rate, keyshift=keyshift)
         aug_mel = aug_mel_t.squeeze().to("cpu").numpy()
         aug_vol = volume_extractor.extract(audio_norm * (10**log10_vol_shift))
         if not os.path.exists(aug_mel_path):
@@ -127,11 +119,7 @@ def parallel_process(filenames, num_processes, f0p, diff, mel_extractor, device)
             start = int(i * len(filenames) / num_processes)
             end = int((i + 1) * len(filenames) / num_processes)
             file_chunk = filenames[start:end]
-            tasks.append(
-                executor.submit(
-                    process_batch, file_chunk, f0p, diff, mel_extractor, device=device
-                )
-            )
+            tasks.append(executor.submit(process_batch, file_chunk, f0p, diff, mel_extractor, device=device))
         for task in tqdm(tasks, position=0):
             task.result()
 
@@ -142,12 +130,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--device", type=str, default=None)
-    parser.add_argument(
-        "--in_dir", type=str, default="dataset/44k/eric_adams", help="path to input dir"
-    )
-    parser.add_argument(
-        "--use_diff", action="store_true", help="Whether to use the diffusion model"
-    )
+    parser.add_argument("--in_dir", type=str, default="dataset/44k/eric_adams", help="path to input dir")
+    parser.add_argument("--use_diff", action="store_true", help="Whether to use the diffusion model")
     parser.add_argument(
         "--f0_predictor",
         type=str,
@@ -176,9 +160,7 @@ if __name__ == "__main__":
     if args.use_diff:
         print("use_diff")
         print("Loading Mel Extractor...")
-        mel_extractor = Vocoder(
-            dconfig.vocoder.type, dconfig.vocoder.ckpt, device=device
-        )
+        mel_extractor = Vocoder(dconfig.vocoder.type, dconfig.vocoder.ckpt, device=device)
         print("Loaded Mel Extractor.")
     else:
         mel_extractor = None
@@ -190,6 +172,4 @@ if __name__ == "__main__":
     if num_processes == 0:
         num_processes = os.cpu_count()
 
-    parallel_process(
-        filenames, num_processes, f0p, args.use_diff, mel_extractor, device
-    )
+    parallel_process(filenames, num_processes, f0p, args.use_diff, mel_extractor, device)

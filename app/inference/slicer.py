@@ -14,13 +14,9 @@ class Slicer:
         max_sil_kept: int = 5000,
     ):
         if not min_length >= min_interval >= hop_size:
-            raise ValueError(
-                "The following condition must be satisfied: min_length >= min_interval >= hop_size"
-            )
+            raise ValueError("The following condition must be satisfied: min_length >= min_interval >= hop_size")
         if not max_sil_kept >= hop_size:
-            raise ValueError(
-                "The following condition must be satisfied: max_sil_kept >= hop_size"
-            )
+            raise ValueError("The following condition must be satisfied: max_sil_kept >= hop_size")
         min_interval = sr * min_interval / 1000
         self.threshold = 10 ** (threshold / 20.0)
         self.hop_size = round(sr * hop_size / 1000)
@@ -31,13 +27,9 @@ class Slicer:
 
     def _apply_slice(self, waveform, begin, end):
         if len(waveform.shape) > 1:
-            return waveform[
-                :, begin * self.hop_size : min(waveform.shape[1], end * self.hop_size)
-            ]
+            return waveform[:, begin * self.hop_size : min(waveform.shape[1], end * self.hop_size)]
         else:
-            return waveform[
-                begin * self.hop_size : min(waveform.shape[0], end * self.hop_size)
-            ]
+            return waveform[begin * self.hop_size : min(waveform.shape[0], end * self.hop_size)]
 
     # @timeit
     def slice(self, waveform):
@@ -47,9 +39,7 @@ class Slicer:
             samples = waveform
         if samples.shape[0] <= self.min_length:
             return {"0": {"slice": False, "split_time": f"0,{len(waveform)}"}}
-        rms_list = librosa.feature.rms(
-            y=samples, frame_length=self.win_size, hop_length=self.hop_size
-        ).squeeze(0)
+        rms_list = librosa.feature.rms(y=samples, frame_length=self.win_size, hop_length=self.hop_size).squeeze(0)
         sil_tags = []
         silence_start = None
         clip_start = 0
@@ -65,10 +55,7 @@ class Slicer:
                 continue
             # Clear recorded silence start if interval is not enough or clip is too short
             is_leading_silence = silence_start == 0 and i > self.max_sil_kept
-            need_slice_middle = (
-                i - silence_start >= self.min_interval
-                and i - clip_start >= self.min_length
-            )
+            need_slice_middle = i - silence_start >= self.min_interval and i - clip_start >= self.min_length
             if not is_leading_silence and not need_slice_middle:
                 silence_start = None
                 continue
@@ -81,21 +68,10 @@ class Slicer:
                     sil_tags.append((pos, pos))
                 clip_start = pos
             elif i - silence_start <= self.max_sil_kept * 2:
-                pos = rms_list[
-                    i - self.max_sil_kept : silence_start + self.max_sil_kept + 1
-                ].argmin()
+                pos = rms_list[i - self.max_sil_kept : silence_start + self.max_sil_kept + 1].argmin()
                 pos += i - self.max_sil_kept
-                pos_l = (
-                    rms_list[
-                        silence_start : silence_start + self.max_sil_kept + 1
-                    ].argmin()
-                    + silence_start
-                )
-                pos_r = (
-                    rms_list[i - self.max_sil_kept : i + 1].argmin()
-                    + i
-                    - self.max_sil_kept
-                )
+                pos_l = rms_list[silence_start : silence_start + self.max_sil_kept + 1].argmin() + silence_start
+                pos_r = rms_list[i - self.max_sil_kept : i + 1].argmin() + i - self.max_sil_kept
                 if silence_start == 0:
                     sil_tags.append((0, pos_r))
                     clip_start = pos_r
@@ -103,17 +79,8 @@ class Slicer:
                     sil_tags.append((min(pos_l, pos), max(pos_r, pos)))
                     clip_start = max(pos_r, pos)
             else:
-                pos_l = (
-                    rms_list[
-                        silence_start : silence_start + self.max_sil_kept + 1
-                    ].argmin()
-                    + silence_start
-                )
-                pos_r = (
-                    rms_list[i - self.max_sil_kept : i + 1].argmin()
-                    + i
-                    - self.max_sil_kept
-                )
+                pos_l = rms_list[silence_start : silence_start + self.max_sil_kept + 1].argmin() + silence_start
+                pos_r = rms_list[i - self.max_sil_kept : i + 1].argmin() + i - self.max_sil_kept
                 if silence_start == 0:
                     sil_tags.append((0, pos_r))
                 else:
@@ -122,10 +89,7 @@ class Slicer:
             silence_start = None
         # Deal with trailing silence.
         total_frames = rms_list.shape[0]
-        if (
-            silence_start is not None
-            and total_frames - silence_start >= self.min_interval
-        ):
+        if silence_start is not None and total_frames - silence_start >= self.min_interval:
             silence_end = min(total_frames, silence_start + self.max_sil_kept)
             pos = rms_list[silence_start : silence_end + 1].argmin() + silence_start
             sil_tags.append((pos, total_frames + 1))
@@ -137,10 +101,7 @@ class Slicer:
             # 第一段静音并非从头开始，补上有声片段
             if sil_tags[0][0]:
                 chunks.append(
-                    {
-                        "slice": False,
-                        "split_time": f"0,{min(waveform.shape[0], sil_tags[0][0] * self.hop_size)}",
-                    }
+                    {"slice": False, "split_time": f"0,{min(waveform.shape[0], sil_tags[0][0] * self.hop_size)}"}
                 )
             for i in range(0, len(sil_tags)):
                 # 标识有声片段（跳过第一段）
@@ -160,12 +121,7 @@ class Slicer:
                 )
             # 最后一段静音并非结尾，补上结尾片段
             if sil_tags[-1][1] * self.hop_size < len(waveform):
-                chunks.append(
-                    {
-                        "slice": False,
-                        "split_time": f"{sil_tags[-1][1] * self.hop_size},{len(waveform)}",
-                    }
-                )
+                chunks.append({"slice": False, "split_time": f"{sil_tags[-1][1] * self.hop_size},{len(waveform)}"})
             chunk_dict = {}
             for i in range(len(chunks)):
                 chunk_dict[str(i)] = chunks[i]

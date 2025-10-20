@@ -13,9 +13,7 @@ from torch.nn import functional as F
 # from:https://github.com/fishaudio/fish-diffusion
 
 
-def repeat_expand(
-    content: Union[torch.Tensor, np.ndarray], target_len: int, mode: str = "nearest"
-):
+def repeat_expand(content: Union[torch.Tensor, np.ndarray], target_len: int, mode: str = "nearest"):
     """Repeat content to target length.
     This is a wrapper of torch.nn.functional.interpolate.
 
@@ -53,13 +51,7 @@ def repeat_expand(
 
 
 class BasePitchExtractor:
-    def __init__(
-        self,
-        hop_length: int = 512,
-        f0_min: float = 50.0,
-        f0_max: float = 1100.0,
-        keep_zeros: bool = True,
-    ):
+    def __init__(self, hop_length: int = 512, f0_min: float = 50.0, f0_max: float = 1100.0, keep_zeros: bool = True):
         """Base pitch extractor.
 
         Args:
@@ -102,15 +94,9 @@ class BasePitchExtractor:
         vuv_vector = F.interpolate(vuv_vector[None, None, :], size=pad_to)[0][0]
 
         if f0.shape[0] <= 0:
-            return (
-                torch.zeros(pad_to, dtype=torch.float, device=x.device),
-                vuv_vector.cpu().numpy(),
-            )
+            return (torch.zeros(pad_to, dtype=torch.float, device=x.device), vuv_vector.cpu().numpy())
         if f0.shape[0] == 1:
-            return (
-                torch.ones(pad_to, dtype=torch.float, device=x.device) * f0[0],
-                vuv_vector.cpu().numpy(),
-            )
+            return (torch.ones(pad_to, dtype=torch.float, device=x.device) * f0[0], vuv_vector.cpu().numpy())
 
         # 大概可以用 torch 重写?
         f0 = np.interp(time_frame, time_org, f0, left=f0[0], right=f0[-1])
@@ -120,9 +106,7 @@ class BasePitchExtractor:
 
 
 class MaskedAvgPool1d(nn.Module):
-    def __init__(
-        self, kernel_size: int, stride: Optional[int] = None, padding: Optional[int] = 0
-    ):
+    def __init__(self, kernel_size: int, stride: Optional[int] = None, padding: Optional[int] = 0):
         """An implementation of mean pooling that supports masked values.
 
         Args:
@@ -141,9 +125,7 @@ class MaskedAvgPool1d(nn.Module):
         if ndim == 2:
             x = x.unsqueeze(1)
 
-        assert (
-            x.dim() == 3
-        ), "Input tensor must have 2 or 3 dimensions (batch_size, channels, width)"
+        assert x.dim() == 3, "Input tensor must have 2 or 3 dimensions (batch_size, channels, width)"
 
         # Apply the mask by setting masked elements to zero, or make NaNs zero
         if mask is None:
@@ -158,20 +140,12 @@ class MaskedAvgPool1d(nn.Module):
 
         # Perform sum pooling
         sum_pooled = nn.functional.conv1d(
-            masked_x,
-            ones_kernel,
-            stride=self.stride,
-            padding=self.padding,
-            groups=x.size(1),
+            masked_x, ones_kernel, stride=self.stride, padding=self.padding, groups=x.size(1)
         )
 
         # Count the non-masked (valid) elements in each pooling window
         valid_count = nn.functional.conv1d(
-            mask.float(),
-            ones_kernel,
-            stride=self.stride,
-            padding=self.padding,
-            groups=x.size(1),
+            mask.float(), ones_kernel, stride=self.stride, padding=self.padding, groups=x.size(1)
         )
         valid_count = valid_count.clamp(min=1)  # Avoid division by zero
 
@@ -188,9 +162,7 @@ class MaskedAvgPool1d(nn.Module):
 
 
 class MaskedMedianPool1d(nn.Module):
-    def __init__(
-        self, kernel_size: int, stride: Optional[int] = None, padding: Optional[int] = 0
-    ):
+    def __init__(self, kernel_size: int, stride: Optional[int] = None, padding: Optional[int] = 0):
         """An implementation of median pooling that supports masked values.
 
         This implementation is inspired by the median pooling implementation in
@@ -212,9 +184,7 @@ class MaskedMedianPool1d(nn.Module):
         if ndim == 2:
             x = x.unsqueeze(1)
 
-        assert (
-            x.dim() == 3
-        ), "Input tensor must have 2 or 3 dimensions (batch_size, channels, width)"
+        assert x.dim() == 3, "Input tensor must have 2 or 3 dimensions (batch_size, channels, width)"
 
         if mask is None:
             mask = ~torch.isnan(x)
@@ -224,9 +194,7 @@ class MaskedMedianPool1d(nn.Module):
         masked_x = torch.where(mask, x, torch.zeros_like(x))
 
         x = F.pad(masked_x, (self.padding, self.padding), mode="reflect")
-        mask = F.pad(
-            mask.float(), (self.padding, self.padding), mode="constant", value=0
-        )
+        mask = F.pad(mask.float(), (self.padding, self.padding), mode="constant", value=0)
 
         x = x.unfold(2, self.kernel_size, self.stride)
         mask = mask.unfold(2, self.kernel_size, self.stride)
@@ -236,9 +204,7 @@ class MaskedMedianPool1d(nn.Module):
 
         # Combine the mask with the input tensor
         # x_masked = torch.where(mask.bool(), x, torch.fill_(torch.zeros_like(x),float("inf")))
-        x_masked = torch.where(
-            mask.bool(), x, torch.FloatTensor([float("inf")]).to(x.device)
-        )
+        x_masked = torch.where(mask.bool(), x, torch.FloatTensor([float("inf")]).to(x.device))
 
         # Sort the masked tensor along the last dimension
         x_sorted, _ = torch.sort(x_masked, dim=-1)
@@ -247,9 +213,7 @@ class MaskedMedianPool1d(nn.Module):
         valid_count = mask.sum(dim=-1)
 
         # Calculate the index of the median value for each pooling window
-        median_idx = (torch.div((valid_count - 1), 2, rounding_mode="trunc")).clamp(
-            min=0
-        )
+        median_idx = (torch.div((valid_count - 1), 2, rounding_mode="trunc")).clamp(min=0)
 
         # Gather the median values using the calculated indices
         median_pooled = x_sorted.gather(-1, median_idx.unsqueeze(-1).long()).squeeze(-1)

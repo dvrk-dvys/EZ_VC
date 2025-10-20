@@ -33,37 +33,12 @@ def main():
         default="/Users/jordanharris/Code/PycharmProjects/EZ_RVC/dataset/configs/config_colab_ow.json",
         help="配置文件路径",
     )
+    parser.add_argument("-cl", "--clip", type=float, default=0, help="音频强制切片，默认0为自动切片，单位为秒/s")
     parser.add_argument(
-        "-cl",
-        "--clip",
-        type=float,
-        default=0,
-        help="音频强制切片，默认0为自动切片，单位为秒/s",
+        "-n", "--clean_paths", type=str, nargs="+", default=["ow_lw_1"], help="wav文件名列表，放在raw文件夹下"
     )
-    parser.add_argument(
-        "-n",
-        "--clean_paths",
-        type=str,
-        nargs="+",
-        default=["ow_lw_1"],
-        help="wav文件名列表，放在raw文件夹下",
-    )
-    parser.add_argument(
-        "-t",
-        "--trans",
-        type=int,
-        nargs="+",
-        default=[0],
-        help="音高调整，支持正负（半音）",
-    )
-    parser.add_argument(
-        "-s",
-        "--spk_list",
-        type=str,
-        nargs="+",
-        default=["lifeweaver"],
-        help="合成目标说话人名称",
-    )
+    parser.add_argument("-t", "--trans", type=int, nargs="+", default=[0], help="音高调整，支持正负（半音）")
+    parser.add_argument("-s", "--spk_list", type=str, nargs="+", default=["lifeweaver"], help="合成目标说话人名称")
 
     # 可选项部分
     parser.add_argument(
@@ -115,13 +90,7 @@ def main():
         default=False,
         help="是否使用浅层扩散，使用后可解决一部分电音问题，默认关闭，该选项打开时，NSF_HIFIGAN增强器将会被禁止",
     )
-    parser.add_argument(
-        "-usm",
-        "--use_spk_mix",
-        action="store_true",
-        default=False,
-        help="是否使用角色融合",
-    )
+    parser.add_argument("-usm", "--use_spk_mix", action="store_true", default=False, help="是否使用角色融合")
     parser.add_argument(
         "-lea",
         "--loudness_envelope_adjustment",
@@ -152,13 +121,7 @@ def main():
         default="/Users/jordanharris/Code/PycharmProjects/EZ_RVC/dataset/configs/diffusion.yaml",
         help="扩散模型配置文件路径",
     )
-    parser.add_argument(
-        "-ks",
-        "--k_step",
-        type=int,
-        default=100,
-        help="扩散步数，越大越接近扩散模型的结果，默认100",
-    )
+    parser.add_argument("-ks", "--k_step", type=int, default=100, help="扩散步数，越大越接近扩散模型的结果，默认100")
     parser.add_argument(
         "-se",
         "--second_encoding",
@@ -176,26 +139,10 @@ def main():
 
     # 不用动的部分
     parser.add_argument(
-        "-sd",
-        "--slice_db",
-        type=int,
-        default=-40,
-        help="默认-40，嘈杂的音频可以-30，干声保留呼吸可以-50",
+        "-sd", "--slice_db", type=int, default=-40, help="默认-40，嘈杂的音频可以-30，干声保留呼吸可以-50"
     )
-    parser.add_argument(
-        "-d",
-        "--device",
-        type=str,
-        default=None,
-        help="推理设备，None则为自动选择cpu和gpu",
-    )
-    parser.add_argument(
-        "-ns",
-        "--noice_scale",
-        type=float,
-        default=0.4,
-        help="噪音级别，会影响咬字和音质，较为玄学",
-    )
+    parser.add_argument("-d", "--device", type=str, default=None, help="推理设备，None则为自动选择cpu和gpu")
+    parser.add_argument("-ns", "--noice_scale", type=float, default=0.4, help="噪音级别，会影响咬字和音质，较为玄学")
     parser.add_argument(
         "-p",
         "--pad_seconds",
@@ -203,9 +150,7 @@ def main():
         default=0.5,
         help="推理音频pad秒数，由于未知原因开头结尾会有异响，pad一小段静音段后就不会出现",
     )
-    parser.add_argument(
-        "-wf", "--wav_format", type=str, default="flac", help="音频输出格式"
-    )
+    parser.add_argument("-wf", "--wav_format", type=str, default="flac", help="音频输出格式")
     parser.add_argument(
         "-lgr",
         "--linear_gradient_retain",
@@ -214,11 +159,7 @@ def main():
         help="自动音频切片后，需要舍弃每段切片的头尾。该参数设置交叉长度保留的比例，范围0-1,左开右闭",
     )
     parser.add_argument(
-        "-eak",
-        "--enhancer_adaptive_key",
-        type=int,
-        default=0,
-        help="使增强器适应更高的音域(单位为半音数)|默认为0",
+        "-eak", "--enhancer_adaptive_key", type=int, default=0, help="使增强器适应更高的音域(单位为半音数)|默认为0"
     )
     parser.add_argument(
         "-ft",
@@ -257,9 +198,7 @@ def main():
 
     if cluster_infer_ratio != 0:
         if args.cluster_model_path == "":
-            if (
-                args.feature_retrieval
-            ):  # 若指定了占比但没有指定模型路径，则按是否使用特征检索分配默认的模型路径
+            if args.feature_retrieval:  # 若指定了占比但没有指定模型路径，则按是否使用特征检索分配默认的模型路径
                 args.cluster_model_path = "data/logs/44k/feature_and_index.pkl"
             else:
                 args.cluster_model_path = "data/logs/44k/kmeans_1000.pt"
@@ -347,9 +286,7 @@ def main():
             # res_path = f'results/{clean_name}_{key}_{spk}{cluster_name}_{isdiffusion}_{f0p}.{wav_format}'
             # "/content/drive/MyDrive/dataset/44k/"
             res_path = (
-                BASE_PATH
-                + "results/"
-                + f"{clean_name}_{key}_{spk}{cluster_name}_{isdiffusion}_{f0p}.{wav_format}"
+                BASE_PATH + "results/" + f"{clean_name}_{key}_{spk}{cluster_name}_{isdiffusion}_{f0p}.{wav_format}"
             )
 
             soundfile.write(res_path, audio, svc_model.target_sample, format=wav_format)

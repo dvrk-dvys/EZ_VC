@@ -32,12 +32,7 @@ class FCPEF0Predictor(F0Predictor):
         self.dtype = dtype
         self.name = "fcpe"
 
-    def repeat_expand(
-        self,
-        content: Union[torch.Tensor, np.ndarray],
-        target_len: int,
-        mode: str = "nearest",
-    ):
+    def repeat_expand(self, content: Union[torch.Tensor, np.ndarray], target_len: int, mode: str = "nearest"):
         ndim = content.ndim
 
         if content.ndim == 1:
@@ -83,10 +78,7 @@ class FCPEF0Predictor(F0Predictor):
         vuv_vector = F.interpolate(vuv_vector[None, None, :], size=pad_to)[0][0]
 
         if f0.shape[0] <= 0:
-            return (
-                torch.zeros(pad_to, dtype=torch.float, device=x.device).cpu().numpy(),
-                vuv_vector.cpu().numpy(),
-            )
+            return (torch.zeros(pad_to, dtype=torch.float, device=x.device).cpu().numpy(), vuv_vector.cpu().numpy())
         if f0.shape[0] == 1:
             return (
                 torch.ones(pad_to, dtype=torch.float, device=x.device) * f0[0]

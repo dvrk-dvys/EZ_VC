@@ -46,10 +46,7 @@ class PMF0Predictor(F0Predictor):
         f0 = (
             parselmouth.Sound(x, self.sampling_rate)
             .to_pitch_ac(
-                time_step=time_step / 1000,
-                voicing_threshold=0.6,
-                pitch_floor=self.f0_min,
-                pitch_ceiling=self.f0_max,
+                time_step=time_step / 1000, voicing_threshold=0.6, pitch_floor=self.f0_min, pitch_ceiling=self.f0_max
             )
             .selected_array["frequency"]
         )
@@ -70,10 +67,7 @@ class PMF0Predictor(F0Predictor):
         f0 = (
             parselmouth.Sound(x, self.sampling_rate)
             .to_pitch_ac(
-                time_step=time_step / 1000,
-                voicing_threshold=0.6,
-                pitch_floor=self.f0_min,
-                pitch_ceiling=self.f0_max,
+                time_step=time_step / 1000, voicing_threshold=0.6, pitch_floor=self.f0_min, pitch_ceiling=self.f0_max
             )
             .selected_array["frequency"]
         )

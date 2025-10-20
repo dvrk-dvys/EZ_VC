@@ -10,9 +10,7 @@ from torch import nn
 # import fast_transformers.causal_product.causal_product_cuda
 
 
-def softmax_kernel(
-    data, *, projection_matrix, is_query, normalize_data=True, eps=1e-4, device=None
-):
+def softmax_kernel(data, *, projection_matrix, is_query, normalize_data=True, eps=1e-4, device=None):
     b, h, *_ = data.shape
     # (batch size, head, length, model_dim)
 
@@ -37,18 +35,9 @@ def softmax_kernel(
 
     # print ()
     if is_query:
-        data_dash = ratio * (
-            torch.exp(
-                data_dash
-                - diag_data
-                - torch.max(data_dash, dim=-1, keepdim=True).values
-            )
-            + eps
-        )
+        data_dash = ratio * (torch.exp(data_dash - diag_data - torch.max(data_dash, dim=-1, keepdim=True).values) + eps)
     else:
-        data_dash = ratio * (
-            torch.exp(data_dash - diag_data + eps)
-        )  # - torch.max(data_dash)) + eps)
+        data_dash = ratio * (torch.exp(data_dash - diag_data + eps))  # - torch.max(data_dash)) + eps)
 
     return data_dash.type_as(data)
 
@@ -85,16 +74,7 @@ def cast_tuple(val):
 class PCmer(nn.Module):
     """The encoder that is used in the Transformer model."""
 
-    def __init__(
-        self,
-        num_layers,
-        num_heads,
-        dim_model,
-        dim_keys,
-        dim_values,
-        residual_dropout,
-        attention_dropout,
-    ):
+    def __init__(self, num_layers, num_heads, dim_model, dim_keys, dim_values, residual_dropout, attention_dropout):
         super().__init__()
         self.num_layers = num_layers
         self.num_heads = num_heads
@@ -143,9 +123,7 @@ class _EncoderLayer(nn.Module):
         self.dropout = nn.Dropout(parent.residual_dropout)
 
         # selfatt -> fastatt: performer!
-        self.attn = SelfAttention(
-            dim=parent.dim_model, heads=parent.num_heads, causal=False
-        )
+        self.attn = SelfAttention(dim=parent.dim_model, heads=parent.num_heads, causal=False)
 
     #  METHODS  ########################################################################################################
 
@@ -204,9 +182,7 @@ class DepthWiseConv1d(nn.Module):
 
 
 class ConformerConvModule(nn.Module):
-    def __init__(
-        self, dim, causal=False, expansion_factor=2, kernel_size=31, dropout=0.0
-    ):
+    def __init__(self, dim, causal=False, expansion_factor=2, kernel_size=31, dropout=0.0):
         super().__init__()
 
         inner_dim = dim * expansion_factor
@@ -217,9 +193,7 @@ class ConformerConvModule(nn.Module):
             Transpose((1, 2)),
             nn.Conv1d(dim, inner_dim * 2, 1),
             GLU(dim=1),
-            DepthWiseConv1d(
-                inner_dim, inner_dim, kernel_size=kernel_size, padding=padding
-            ),
+            DepthWiseConv1d(inner_dim, inner_dim, kernel_size=kernel_size, padding=padding),
             # nn.BatchNorm1d(inner_dim) if not causal else nn.Identity(),
             Swish(),
             nn.Conv1d(inner_dim, dim, 1),
@@ -248,17 +222,13 @@ def linear_attention(q, k, v):
         return out
 
 
-def gaussian_orthogonal_random_matrix(
-    nb_rows, nb_columns, scaling=0, qr_uniform_q=False, device=None
-):
+def gaussian_orthogonal_random_matrix(nb_rows, nb_columns, scaling=0, qr_uniform_q=False, device=None):
     nb_full_blocks = int(nb_rows / nb_columns)
     # print (nb_full_blocks)
     block_list = []
 
     for _ in range(nb_full_blocks):
-        q = orthogonal_matrix_chunk(
-            nb_columns, qr_uniform_q=qr_uniform_q, device=device
-        )
+        q = orthogonal_matrix_chunk(nb_columns, qr_uniform_q=qr_uniform_q, device=device)
         block_list.append(q)
     # block_list[n] is a orthogonal matrix ... (model_dim * model_dim)
     # print (block_list[0].size(), torch.einsum('...nd,...nd->...n', block_list[0], torch.roll(block_list[0],1,1)))
@@ -266,9 +236,7 @@ def gaussian_orthogonal_random_matrix(
     remaining_rows = nb_rows - nb_full_blocks * nb_columns
     # print (remaining_rows)
     if remaining_rows > 0:
-        q = orthogonal_matrix_chunk(
-            nb_columns, qr_uniform_q=qr_uniform_q, device=device
-        )
+        q = orthogonal_matrix_chunk(nb_columns, qr_uniform_q=qr_uniform_q, device=device)
         # print (q[:remaining_rows].size())
         block_list.append(q[:remaining_rows])
 
@@ -277,9 +245,7 @@ def gaussian_orthogonal_random_matrix(
     if scaling == 0:
         multiplier = torch.randn((nb_rows, nb_columns), device=device).norm(dim=1)
     elif scaling == 1:
-        multiplier = math.sqrt((float(nb_columns))) * torch.ones(
-            (nb_rows,), device=device
-        )
+        multiplier = math.sqrt((float(nb_columns))) * torch.ones((nb_rows,), device=device)
     else:
         raise ValueError(f"Invalid scaling {scaling}")
 
@@ -337,9 +303,7 @@ class FastAttention(nn.Module):
             q = q.softmax(dim=-1)
             k = torch.exp(k) if self.causal else k.softmax(dim=-2)
         else:
-            create_kernel = partial(
-                softmax_kernel, projection_matrix=self.projection_matrix, device=device
-            )
+            create_kernel = partial(softmax_kernel, projection_matrix=self.projection_matrix, device=device)
 
             q = create_kernel(q, is_query=True)
             k = create_kernel(k, is_query=False)
@@ -415,16 +379,7 @@ class SelfAttention(nn.Module):
         # torch.nn.init.zeros_(self.name_embedding)
         # print (torch.sum(self.name_embedding))
 
-    def forward(
-        self,
-        x,
-        context=None,
-        mask=None,
-        context_mask=None,
-        name=None,
-        inference=False,
-        **kwargs,
-    ):
+    def forward(self, x, context=None, mask=None, context_mask=None, name=None, inference=False, **kwargs):
         _, _, _, h, gh = *x.shape, self.heads, self.global_heads
 
         cross_attend = exists(context)
@@ -454,9 +409,7 @@ class SelfAttention(nn.Module):
             attn_outs.append(out)
 
         if not empty(lq):
-            assert (
-                not cross_attend
-            ), "local attention is not compatible with cross attention"
+            assert not cross_attend, "local attention is not compatible with cross attention"
             out = self.local_attn(lq, lk, lv, input_mask=mask)
             attn_outs.append(out)
 

@@ -44,18 +44,12 @@ class FCPE(nn.Module):
             raise ValueError("Full model is not supported yet.")
 
         self.loss_mse_scale = loss_mse_scale if (loss_mse_scale is not None) else 10
-        self.loss_l2_regularization = (
-            loss_l2_regularization if (loss_l2_regularization is not None) else False
-        )
+        self.loss_l2_regularization = loss_l2_regularization if (loss_l2_regularization is not None) else False
         self.loss_l2_regularization_scale = (
-            loss_l2_regularization_scale
-            if (loss_l2_regularization_scale is not None)
-            else 1
+            loss_l2_regularization_scale if (loss_l2_regularization_scale is not None) else 1
         )
         self.loss_grad1_mse = loss_grad1_mse if (loss_grad1_mse is not None) else False
-        self.loss_grad1_mse_scale = (
-            loss_grad1_mse_scale if (loss_grad1_mse_scale is not None) else 1
-        )
+        self.loss_grad1_mse_scale = loss_grad1_mse_scale if (loss_grad1_mse_scale is not None) else 1
         self.f0_max = f0_max if (f0_max is not None) else 1975.5
         self.f0_min = f0_min if (f0_min is not None) else 32.70
         self.confidence = confidence if (confidence is not None) else False
@@ -64,9 +58,7 @@ class FCPE(nn.Module):
 
         self.cent_table_b = torch.Tensor(
             np.linspace(
-                self.f0_to_cent(torch.Tensor([f0_min]))[0],
-                self.f0_to_cent(torch.Tensor([f0_max]))[0],
-                out_dims,
+                self.f0_to_cent(torch.Tensor([f0_min]))[0], self.f0_to_cent(torch.Tensor([f0_max]))[0], out_dims
             )
         )
         self.register_buffer("cent_table", self.cent_table_b)
@@ -96,9 +88,7 @@ class FCPE(nn.Module):
         self.n_out = out_dims
         self.dense_out = weight_norm(nn.Linear(n_chans, self.n_out))
 
-    def forward(
-        self, mel, infer=True, gt_f0=None, return_hz_f0=False, cdecoder="local_argmax"
-    ):
+    def forward(self, mel, infer=True, gt_f0=None, return_hz_f0=False, cdecoder="local_argmax"):
         """
         input:
             B x n_frames x n_unit
@@ -120,14 +110,10 @@ class FCPE(nn.Module):
         if not infer:
             gt_cent_f0 = self.f0_to_cent(gt_f0)  # mel f0  #[B,N,1]
             gt_cent_f0 = self.gaussian_blurred_cent(gt_cent_f0)  # #[B,N,out_dim]
-            loss_all = self.loss_mse_scale * F.binary_cross_entropy(
-                x, gt_cent_f0
-            )  # bce loss
+            loss_all = self.loss_mse_scale * F.binary_cross_entropy(x, gt_cent_f0)  # bce loss
             # l2 regularization
             if self.loss_l2_regularization:
-                loss_all = loss_all + l2_regularization(
-                    model=self, l2_alpha=self.loss_l2_regularization_scale
-                )
+                loss_all = loss_all + l2_regularization(model=self, l2_alpha=self.loss_l2_regularization_scale)
             x = loss_all
         if infer:
             x = self.cdecoder(x)
@@ -139,9 +125,7 @@ class FCPE(nn.Module):
     def cents_decoder(self, y, mask=True):
         B, N, _ = y.size()
         ci = self.cent_table[None, None, :].expand(B, N, -1)
-        rtn = torch.sum(ci * y, dim=-1, keepdim=True) / torch.sum(
-            y, dim=-1, keepdim=True
-        )  # cents: [B,N,1]
+        rtn = torch.sum(ci * y, dim=-1, keepdim=True) / torch.sum(y, dim=-1, keepdim=True)  # cents: [B,N,1]
         if mask:
             confident = torch.max(y, dim=-1, keepdim=True)[0]
             confident_mask = torch.ones_like(confident)
@@ -161,9 +145,7 @@ class FCPE(nn.Module):
         local_argmax_index[local_argmax_index >= self.n_out] = self.n_out - 1
         ci_l = torch.gather(ci, -1, local_argmax_index)
         y_l = torch.gather(y, -1, local_argmax_index)
-        rtn = torch.sum(ci_l * y_l, dim=-1, keepdim=True) / torch.sum(
-            y_l, dim=-1, keepdim=True
-        )  # cents: [B,N,1]
+        rtn = torch.sum(ci_l * y_l, dim=-1, keepdim=True) / torch.sum(y_l, dim=-1, keepdim=True)  # cents: [B,N,1]
         if mask:
             confident_mask = torch.ones_like(confident)
             confident_mask[confident <= self.threshold] = float("-INF")
@@ -247,9 +229,7 @@ class Wav2Mel:
         self.resample_kernel = {}
 
     def extract_nvstft(self, audio, keyshift=0, train=False):
-        mel = self.stft.get_mel(audio, keyshift=keyshift, train=train).transpose(
-            1, 2
-        )  # B, n_frames, bins
+        mel = self.stft.get_mel(audio, keyshift=keyshift, train=train).transpose(1, 2)  # B, n_frames, bins
         return mel
 
     def extract_mel(self, audio, sample_rate, keyshift=0, train=False):
@@ -260,18 +240,12 @@ class Wav2Mel:
         else:
             key_str = str(sample_rate)
             if key_str not in self.resample_kernel:
-                self.resample_kernel[key_str] = Resample(
-                    sample_rate, self.sampling_rate, lowpass_filter_width=128
-                )
-            self.resample_kernel[key_str] = (
-                self.resample_kernel[key_str].to(self.dtype).to(self.device)
-            )
+                self.resample_kernel[key_str] = Resample(sample_rate, self.sampling_rate, lowpass_filter_width=128)
+            self.resample_kernel[key_str] = self.resample_kernel[key_str].to(self.dtype).to(self.device)
             audio_res = self.resample_kernel[key_str](audio)
 
         # extract
-        mel = self.extract_nvstft(
-            audio_res, keyshift=keyshift, train=train
-        )  # B, n_frames, bins
+        mel = self.extract_nvstft(audio_res, keyshift=keyshift, train=train)  # B, n_frames, bins
         n_frames = int(audio.shape[1] // self.hop_size) + 1
         if n_frames > int(mel.shape[1]):
             mel = torch.cat((mel, mel[:, -1:, :]), 1)

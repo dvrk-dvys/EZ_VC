@@ -68,9 +68,7 @@ def to_local_average_cents(salience, center=None, thred=0.05):
 
     if not hasattr(to_local_average_cents, "cents_mapping"):
         # the bin number-to-cents mapping
-        to_local_average_cents.cents_mapping = (20 * torch.arange(N_CLASS) + CONST).to(
-            salience.device
-        )  # noqa: F405
+        to_local_average_cents.cents_mapping = (20 * torch.arange(N_CLASS) + CONST).to(salience.device)  # noqa: F405
 
     if salience.ndim == 1:
         if center is None:
@@ -78,18 +76,13 @@ def to_local_average_cents(salience, center=None, thred=0.05):
         start = max(0, center - 4)
         end = min(len(salience), center + 5)
         salience = salience[start:end]
-        product_sum = torch.sum(
-            salience * to_local_average_cents.cents_mapping[start:end]
-        )
+        product_sum = torch.sum(salience * to_local_average_cents.cents_mapping[start:end])
         weight_sum = torch.sum(salience)
         return product_sum / weight_sum if torch.max(salience) > thred else 0
     if salience.ndim == 2:
-        return torch.Tensor(
-            [
-                to_local_average_cents(salience[i, :], None, thred)
-                for i in range(salience.shape[0])
-            ]
-        ).to(salience.device)
+        return torch.Tensor([to_local_average_cents(salience[i, :], None, thred) for i in range(salience.shape[0])]).to(
+            salience.device
+        )
 
     raise Exception("label should be either 1d or 2d ndarray")
 
@@ -107,13 +100,8 @@ def to_viterbi_cents(salience, thred=0.05):
     prob = prob / prob.sum(axis=0)
 
     # Perform viterbi decoding
-    path = librosa.sequence.viterbi(
-        prob.detach().cpu().numpy(), to_viterbi_cents.transition
-    ).astype(np.int64)
+    path = librosa.sequence.viterbi(prob.detach().cpu().numpy(), to_viterbi_cents.transition).astype(np.int64)
 
-    return torch.Tensor(
-        [
-            to_local_average_cents(salience[i, :], path[i], thred)
-            for i in range(len(path))
-        ]
-    ).to(salience.device)
+    return torch.Tensor([to_local_average_cents(salience[i, :], path[i], thred) for i in range(len(path))]).to(
+        salience.device
+    )

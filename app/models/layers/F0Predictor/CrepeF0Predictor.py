@@ -5,22 +5,10 @@ from data.model_dir import CrepePitchExtractor, F0Predictor
 
 class CrepeF0Predictor(F0Predictor):
     def __init__(
-        self,
-        hop_length=512,
-        f0_min=50,
-        f0_max=1100,
-        device=None,
-        sampling_rate=44100,
-        threshold=0.05,
-        model="full",
+        self, hop_length=512, f0_min=50, f0_max=1100, device=None, sampling_rate=44100, threshold=0.05, model="full"
     ):
         self.F0Creper = CrepePitchExtractor(
-            hop_length=hop_length,
-            f0_min=f0_min,
-            f0_max=f0_max,
-            device=device,
-            threshold=threshold,
-            model=model,
+            hop_length=hop_length, f0_min=f0_min, f0_max=f0_max, device=device, threshold=threshold, model=model
         )
         self.hop_length = hop_length
         self.f0_min = f0_min

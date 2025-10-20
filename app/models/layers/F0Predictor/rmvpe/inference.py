@@ -30,9 +30,7 @@ class RMVPE:
     def mel2hidden(self, mel):
         with torch.no_grad():
             n_frames = mel.shape[-1]
-            mel = F.pad(
-                mel, (0, 32 * ((n_frames - 1) // 32 + 1) - n_frames), mode="constant"
-            )
+            mel = F.pad(mel, (0, 32 * ((n_frames - 1) // 32 + 1) - n_frames), mode="constant")
             hidden = self.model(mel)
             return hidden[:, :n_frames]
 
@@ -41,12 +39,9 @@ class RMVPE:
             cents_pred = to_viterbi_cents(hidden, thred=thred)
         else:
             cents_pred = to_local_average_cents(hidden, thred=thred)
-        f0 = torch.Tensor(
-            [
-                10 * (2 ** (cent_pred / 1200)) if cent_pred else 0
-                for cent_pred in cents_pred
-            ]
-        ).to(self.device)
+        f0 = torch.Tensor([10 * (2 ** (cent_pred / 1200)) if cent_pred else 0 for cent_pred in cents_pred]).to(
+            self.device
+        )
         return f0
 
     def infer_from_audio(self, audio, sample_rate=16000, thred=0.05, use_viterbi=False):
@@ -56,12 +51,8 @@ class RMVPE:
         else:
             key_str = str(sample_rate)
             if key_str not in self.resample_kernel:
-                self.resample_kernel[key_str] = Resample(
-                    sample_rate, 16000, lowpass_filter_width=128
-                )
-            self.resample_kernel[key_str] = (
-                self.resample_kernel[key_str].to(self.dtype).to(self.device)
-            )
+                self.resample_kernel[key_str] = Resample(sample_rate, 16000, lowpass_filter_width=128)
+            self.resample_kernel[key_str] = self.resample_kernel[key_str].to(self.dtype).to(self.device)
             audio_res = self.resample_kernel[key_str](audio)
         mel_extractor = self.mel_extractor.to(self.device)
         mel = mel_extractor(audio_res, center=True).to(self.dtype)

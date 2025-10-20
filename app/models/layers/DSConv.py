@@ -31,12 +31,7 @@ class Depthwise_Separable_Conv1D(nn.Module):
             dtype=dtype,
         )
         self.point_conv = nn.Conv1d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=1,
-            bias=bias,
-            device=device,
-            dtype=dtype,
+            in_channels=in_channels, out_channels=out_channels, kernel_size=1, bias=bias, device=device, dtype=dtype
         )
 
     def forward(self, input):
@@ -82,12 +77,7 @@ class Depthwise_Separable_TransposeConv1D(nn.Module):
             dtype=dtype,
         )
         self.point_conv = nn.Conv1d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=1,
-            bias=bias,
-            device=device,
-            dtype=dtype,
+            in_channels=in_channels, out_channels=out_channels, kernel_size=1, bias=bias, device=device, dtype=dtype
         )
 
     def forward(self, input):
@@ -103,9 +93,7 @@ class Depthwise_Separable_TransposeConv1D(nn.Module):
 
 
 def weight_norm_modules(module, name="weight", dim=0):
-    if isinstance(module, Depthwise_Separable_Conv1D) or isinstance(
-        module, Depthwise_Separable_TransposeConv1D
-    ):
+    if isinstance(module, Depthwise_Separable_Conv1D) or isinstance(module, Depthwise_Separable_TransposeConv1D):
         module.weight_norm()
         return module
     else:
@@ -113,9 +101,7 @@ def weight_norm_modules(module, name="weight", dim=0):
 
 
 def remove_weight_norm_modules(module, name="weight"):
-    if isinstance(module, Depthwise_Separable_Conv1D) or isinstance(
-        module, Depthwise_Separable_TransposeConv1D
-    ):
+    if isinstance(module, Depthwise_Separable_Conv1D) or isinstance(module, Depthwise_Separable_TransposeConv1D):
         module.remove_weight_norm()
     else:
         remove_weight_norm(module, name)

@@ -21,9 +21,7 @@ def resize2d_f0(x, target_len):
     source = np.array(x)
     source[source < 0.001] = np.nan
     target = np.interp(
-        np.arange(0, len(source) * target_len, len(source)) / target_len,
-        np.arange(0, len(source)),
-        source,
+        np.arange(0, len(source) * target_len, len(source)) / target_len, np.arange(0, len(source)), source
     )
     res = np.nan_to_num(target)
     return res
@@ -39,12 +37,7 @@ def get_f0(x, p_len, f0_up_key=0):
 
     f0 = (
         parselmouth.Sound(x, 16000)
-        .to_pitch_ac(
-            time_step=time_step / 1000,
-            voicing_threshold=0.6,
-            pitch_floor=f0_min,
-            pitch_ceiling=f0_max,
-        )
+        .to_pitch_ac(time_step=time_step / 1000, voicing_threshold=0.6, pitch_floor=f0_min, pitch_ceiling=f0_max)
         .selected_array["frequency"]
     )
 
@@ -54,9 +47,7 @@ def get_f0(x, p_len, f0_up_key=0):
 
     f0 *= pow(2, f0_up_key / 12)
     f0_mel = 1127 * np.log(1 + f0 / 700)
-    f0_mel[f0_mel > 0] = (f0_mel[f0_mel > 0] - f0_mel_min) * 254 / (
-        f0_mel_max - f0_mel_min
-    ) + 1
+    f0_mel[f0_mel > 0] = (f0_mel[f0_mel > 0] - f0_mel_min) * 254 / (f0_mel_max - f0_mel_min) + 1
     f0_mel[f0_mel <= 1] = 1
     f0_mel[f0_mel > 255] = 255
     f0_coarse = np.rint(f0_mel).astype(np.int)

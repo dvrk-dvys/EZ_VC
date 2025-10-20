@@ -19,18 +19,14 @@ else:
         __Warning__: Different to julius.sinc, the input is multiplied by `pi`!
         """
         return torch.where(
-            x == 0,
-            torch.tensor(1.0, device=x.device, dtype=x.dtype),
-            torch.sin(math.pi * x) / math.pi / x,
+            x == 0, torch.tensor(1.0, device=x.device, dtype=x.dtype), torch.sin(math.pi * x) / math.pi / x
         )
 
 
 # This code is adopted from adefossez's julius.lowpass.LowPassFilters under the MIT License
 # https://adefossez.github.io/julius/julius/lowpass.html
 #   LICENSE is in incl_licenses directory.
-def kaiser_sinc_filter1d(
-    cutoff, half_width, kernel_size
-):  # return filter [1,1,kernel_size]
+def kaiser_sinc_filter1d(cutoff, half_width, kernel_size):  # return filter [1,1,kernel_size]
     even = kernel_size % 2 == 0
     half_size = kernel_size // 2
 
@@ -91,9 +87,7 @@ class LowPassFilter1d(nn.Module):
         self.register_buffer("filter", filter)
         self.conv1d_block = None
         if C is not None:
-            self.conv1d_block = [
-                nn.Conv1d(C, C, kernel_size, stride=self.stride, groups=C, bias=False),
-            ]
+            self.conv1d_block = [nn.Conv1d(C, C, kernel_size, stride=self.stride, groups=C, bias=False)]
             self.conv1d_block[0].weight = nn.Parameter(self.filter.expand(C, -1, -1))
             self.conv1d_block[0].requires_grad_(False)
 
@@ -106,9 +100,7 @@ class LowPassFilter1d(nn.Module):
 
             if self.padding:
                 x = F.pad(x, (self.pad_left, self.pad_right), mode=self.padding_mode)
-            out = F.conv1d(
-                x, self.filter.expand(C, -1, -1), stride=self.stride, groups=C
-            )
+            out = F.conv1d(x, self.filter.expand(C, -1, -1), stride=self.stride, groups=C)
         else:
             if self.padding:
                 x = F.pad(x, (self.pad_left, self.pad_right), mode=self.padding_mode)

@@ -51,9 +51,7 @@ def extract_main_singer_segments(wav_path, rttm_path):
             start = float(parts[3])
             duration = float(parts[4])
             speaker_id = parts[7]
-            annotations.append(
-                {"start": start, "duration": duration, "speaker": speaker_id}
-            )
+            annotations.append({"start": start, "duration": duration, "speaker": speaker_id})
             speaker_durations.append((speaker_id, duration))
 
         # Find the most frequent speaker label
@@ -69,9 +67,7 @@ def extract_main_singer_segments(wav_path, rttm_path):
     audio_data, sr = sf.read(wav_path)
     # audio = AudioSegment.from_wav(wav_path)
 
-    output_path = (
-        "/Users/jordanharris/Code/PycharmProjects/EZ_RVC/dataset_raw/SZA_CTRL/"
-    )
+    output_path = "/Users/jordanharris/Code/PycharmProjects/EZ_RVC/dataset_raw/SZA_CTRL/"
     # output_file_name = "2_SZA-Doves_In_The_Wind.wav"
     # output_file_name = "3_SZA-Love Galore.wav"
     # output_file_name = "8_SZA-Wavy.wav"
@@ -98,9 +94,7 @@ def extract_main_singer_segments(wav_path, rttm_path):
     # sf.write(output_path, segments[4], sr)
     print()
     # Convert the defaultdict to a list of tuples
-    filtered_segments = [
-        segment for segment in segments[MAIN_SPEAKER] if not is_silent(segment)
-    ]
+    filtered_segments = [segment for segment in segments[MAIN_SPEAKER] if not is_silent(segment)]
 
     # Fade length in milliseconds; adjust as needed
     fade_length_ms = 15
@@ -130,7 +124,9 @@ if __name__ == "__main__":
     # rttm_file = '/Users/jordanharris/Code/PycharmProjects/EZ_RVC/output/preprocess/sza_diairized/2_SZA_Doves_In_The_Wind_(feat._Kendrick_Lamar)_(Filtered_Acapella)_(Vocals)_audio.rttm'
     # rttm_file = "/Users/jordanharris/Code/PycharmProjects/EZ_RVC/output/preprocess/sza_diairized/3_SZA_Love_Galore_(feat._Travis_Scott)_(Filtered_Acapella)_(Vocals)_audio.rttm"
     # rttm_file = "/Users/jordanharris/Code/PycharmProjects/EZ_RVC/output/preprocess/sza_diairized/8_SZA_Wavy_(Interlude)_(feat._James_Fauntleroy)_(Filtered_Acapella)_(Vocals)_audio.rttm"
-    rttm_file = "/output/sza_diairized/9_SZA_Pretty_Little_Birds_(feat._Isaiah_Rashad)_(Filtered_Acapella)_(Vocals)_audio.rttm"
+    rttm_file = (
+        "/output/sza_diairized/9_SZA_Pretty_Little_Birds_(feat._Isaiah_Rashad)_(Filtered_Acapella)_(Vocals)_audio.rttm"
+    )
     # rttm_file = "/Users/jordanharris/Code/PycharmProjects/EZ_RVC/output/preprocess/sza_diairized/SZA_Billboard_Interview_Unedited_Raw_audio.rttm"
 
     # segments = read_rttm(rttm_file)
@@ -147,9 +143,7 @@ if __name__ == "__main__":
 
     # audio = AudioSegment.from_wav(wav_file)
     #
-    most_common_label, concatenated_segments, sr = extract_main_singer_segments(
-        wav_file, rttm_file
-    )
+    most_common_label, concatenated_segments, sr = extract_main_singer_segments(wav_file, rttm_file)
     # main_segments.export(f"2_SZA - Doves In The Wind.wav", format="wav")
     # Iterate through segments and cut out the segments
     # for i, (start_time, end_time) in enumerate(segments):

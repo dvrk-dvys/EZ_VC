@@ -355,19 +355,14 @@ plot(waveforms, spec, vocoder.sample_rate)
 # Workaround to load model mapped on GPU
 # https://stackoverflow.com/a/61840832
 waveglow = torch.hub.load(
-    "NVIDIA/DeepLearningExamples:torchhub",
-    "nvidia_waveglow",
-    model_math="fp32",
-    pretrained=False,
+    "NVIDIA/DeepLearningExamples:torchhub", "nvidia_waveglow", model_math="fp32", pretrained=False
 )
 checkpoint = torch.hub.load_state_dict_from_url(
     "https://api.ngc.nvidia.com/v2/models/nvidia/waveglowpyt_fp32/versions/1/files/nvidia_waveglowpyt_fp32_20190306.pth",  # noqa: E501
     progress=False,
     map_location=device,
 )
-state_dict = {
-    key.replace("module.", ""): value for key, value in checkpoint["state_dict"].items()
-}
+state_dict = {key.replace("module.", ""): value for key, value in checkpoint["state_dict"].items()}
 
 waveglow.load_state_dict(state_dict)
 waveglow = waveglow.remove_weightnorm(waveglow)
@@ -376,9 +371,7 @@ waveglow.eval()
 
 with torch.no_grad():
     waveforms = waveglow.infer(spec)
-torchaudio.save(
-    "./dataset_raw/Scripts/output.wav", waveforms.cpu().squeeze(1), sample_rate=22050
-)
+torchaudio.save("./dataset_raw/Scripts/output.wav", waveforms.cpu().squeeze(1), sample_rate=22050)
 ######################################################################
 #
 

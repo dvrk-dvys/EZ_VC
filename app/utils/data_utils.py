@@ -22,9 +22,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
     3) computes spectrograms from audio files.
     """
 
-    def __init__(
-        self, audiopaths, hparams, all_in_mem: bool = False, vol_aug: bool = True
-    ):
+    def __init__(self, audiopaths, hparams, all_in_mem: bool = False, vol_aug: bool = True):
         self.audiopaths = load_filepaths_and_text(audiopaths)
         self.hparams = hparams
         self.max_wav_value = hparams.data.max_wav_value
@@ -64,12 +62,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
             spec = torch.load(spec_filename)
         else:
             spec = spectrogram_torch(
-                audio_norm,
-                self.filter_length,
-                self.sampling_rate,
-                self.hop_length,
-                self.win_length,
-                center=False,
+                audio_norm, self.filter_length, self.sampling_rate, self.hop_length, self.win_length, center=False
             )
             spec = torch.squeeze(spec, 0)
             torch.save(spec, spec_filename)
@@ -81,13 +74,9 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
             print("Do you have more than one speaker to train data on?")
 
             try:
-                spk = filename.split("/")[
-                    -2
-                ]  # default behavior, or you can raise an error
+                spk = filename.split("/")[-2]  # default behavior, or you can raise an error
             except:
-                print(
-                    "Failure on more tha one error. Do you have more than one speaker to train data on?"
-                )
+                print("Failure on more tha one error. Do you have more than one speaker to train data on?")
 
         spk = torch.LongTensor([self.spk_map[spk]])
 
@@ -97,9 +86,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         uv = torch.FloatTensor(np.array(uv, dtype=float))
 
         c = torch.load(filename + ".soft.pt")
-        c = utils.repeat_expand_2d(
-            c.squeeze(0), f0.shape[0], mode=self.unit_interpolate_mode
-        )
+        c = utils.repeat_expand_2d(c.squeeze(0), f0.shape[0], mode=self.unit_interpolate_mode)
         if self.vol_emb:
             volume_path = filename + ".vol.npy"
             volume = np.load(volume_path)
@@ -115,12 +102,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         # print(self.hop_length)
         # lmin = min(c.size(-1) // 2, spec.size(-1))
 
-        assert abs(c.size(-1) - spec.size(-1)) < 3, (
-            c.size(-1),
-            spec.size(-1),
-            f0.shape,
-            filename,
-        )
+        assert abs(c.size(-1) - spec.size(-1)) < 3, (c.size(-1), spec.size(-1), f0.shape, filename)
         assert abs(audio_norm.shape[1] - lmin * self.hop_length) < 3 * self.hop_length
         spec, c, f0, uv = spec[:, :lmin], c[:, :lmin], f0[:lmin], uv[:lmin]
         audio_norm = audio_norm[:, : lmin * self.hop_length]
@@ -151,12 +133,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         if spec.shape[1] > 800:
             start = random.randint(0, spec.shape[1] - 800)
             end = start + 790
-            spec, c, f0, uv = (
-                spec[:, start:end],
-                c[:, start:end],
-                f0[start:end],
-                uv[start:end],
-            )
+            spec, c, f0, uv = (spec[:, start:end], c[:, start:end], f0[start:end], uv[start:end])
             audio_norm = audio_norm[:, start * self.hop_length : end * self.hop_length]
             if volume is not None:
                 volume = volume[start:end]
@@ -226,13 +203,4 @@ class TextAudioCollate:
                 volume_padded[i, : volume.size(0)] = volume
             else:
                 volume_padded = None
-        return (
-            c_padded,
-            f0_padded,
-            spec_padded,
-            wav_padded,
-            spkids,
-            lengths,
-            uv_padded,
-            volume_padded,
-        )
+        return (c_padded, f0_padded, spec_padded, wav_padded, spkids, lengths, uv_padded, volume_padded)

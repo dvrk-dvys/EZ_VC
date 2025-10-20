@@ -40,16 +40,10 @@ def prune_conv1d_layer(layer: nn.Conv1d, index: torch.LongTensor, dim: str):
         layer.bias = nn.Parameter(layer.bias.index_select(0, index).clone().detach())
 
 
-def prune_layer_norm(
-    layernorm: Union[nn.LayerNorm, nn.GroupNorm], index: torch.LongTensor
-):
+def prune_layer_norm(layernorm: Union[nn.LayerNorm, nn.GroupNorm], index: torch.LongTensor):
     """Prune layer norm or group norm in place."""
-    layernorm.weight = nn.Parameter(
-        layernorm.weight.index_select(0, index).clone().detach()
-    )
-    layernorm.bias = nn.Parameter(
-        layernorm.bias.index_select(0, index).clone().detach()
-    )
+    layernorm.weight = nn.Parameter(layernorm.weight.index_select(0, index).clone().detach())
+    layernorm.bias = nn.Parameter(layernorm.bias.index_select(0, index).clone().detach())
     if isinstance(layernorm, nn.LayerNorm):
         layernorm.normalized_shape = (len(index),)
     elif isinstance(layernorm, nn.GroupNorm):

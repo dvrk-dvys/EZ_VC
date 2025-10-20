@@ -30,15 +30,11 @@ def load_wav_to_torch(full_path, target_sr=None, return_empty_on_exception=False
         )  # check duration of audio file is > 2 samples (because otherwise the slice operation was on the wrong dimension)
 
     if np.issubdtype(data.dtype, np.integer):  # if audio data is type int
-        max_mag = -np.iinfo(
-            data.dtype
-        ).min  # maximum magnitude = min possible value of intXX
+        max_mag = -np.iinfo(data.dtype).min  # maximum magnitude = min possible value of intXX
     else:  # if audio data is type fp32
         max_mag = max(np.amax(data), -np.amin(data))
         max_mag = (
-            (2**31) + 1
-            if max_mag > (2**15)
-            else ((2**15) + 1 if max_mag > 1.01 else 1.0)
+            (2**31) + 1 if max_mag > (2**15) else ((2**15) + 1 if max_mag > 1.01 else 1.0)
         )  # data should be either 16-bit INT, 32-bit INT or [-1 to 1] float32
 
     data = torch.FloatTensor(data.astype(np.float32)) / max_mag
@@ -48,11 +44,7 @@ def load_wav_to_torch(full_path, target_sr=None, return_empty_on_exception=False
     ).any() and return_empty_on_exception:  # resample will crash with inf/NaN inputs. return_empty_on_exception will return empty arr instead of except
         return [], sampling_rate or target_sr or 48000
     if target_sr is not None and sampling_rate != target_sr:
-        data = torch.from_numpy(
-            librosa.core.resample(
-                data.numpy(), orig_sr=sampling_rate, target_sr=target_sr
-            )
-        )
+        data = torch.from_numpy(librosa.core.resample(data.numpy(), orig_sr=sampling_rate, target_sr=target_sr))
         sampling_rate = target_sr
 
     return data, sampling_rate
@@ -76,15 +68,7 @@ def dynamic_range_decompression_torch(x, C=1):
 
 class STFT:
     def __init__(
-        self,
-        sr=22050,
-        n_mels=80,
-        n_fft=1024,
-        win_size=1024,
-        hop_length=256,
-        fmin=20,
-        fmax=11025,
-        clip_val=1e-5,
+        self, sr=22050, n_mels=80, n_fft=1024, win_size=1024, hop_length=256, fmin=20, fmax=11025, clip_val=1e-5
     ):
         self.target_sr = sr
 
@@ -126,9 +110,7 @@ class STFT:
 
         mel_basis_key = str(fmax) + "_" + str(y.device)
         if mel_basis_key not in mel_basis:
-            mel = librosa_mel_fn(
-                sr=sampling_rate, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax
-            )
+            mel = librosa_mel_fn(sr=sampling_rate, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax)
             mel_basis[mel_basis_key] = torch.from_numpy(mel).float().to(y.device)
 
         keyshift_key = str(keyshift) + "_" + str(y.device)
@@ -136,10 +118,7 @@ class STFT:
             hann_window[keyshift_key] = torch.hann_window(win_size_new).to(y.device)
 
         pad_left = (win_size_new - hop_length_new) // 2
-        pad_right = max(
-            (win_size_new - hop_length_new + 1) // 2,
-            win_size_new - y.size(-1) - pad_left,
-        )
+        pad_right = max((win_size_new - hop_length_new + 1) // 2, win_size_new - y.size(-1) - pad_left)
         if pad_right < y.size(-1):
             mode = "reflect"
         else:

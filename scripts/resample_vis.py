@@ -1,7 +1,9 @@
 import librosa
 import matplotlib.pyplot as plt
 
-file = "/Users/jordanharris/Code/PycharmProjects/EZ_RVC/input/SZA_CTRL/1_SZA - Supermodel (Filtered Acapella)_(Vocals).wav"
+file = (
+    "/Users/jordanharris/Code/PycharmProjects/EZ_RVC/input/SZA_CTRL/1_SZA - Supermodel (Filtered Acapella)_(Vocals).wav"
+)
 # Load the audio file without resampling
 y_original, sr_original = librosa.load(file, sr=None)
 

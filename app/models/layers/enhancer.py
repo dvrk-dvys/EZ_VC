@@ -22,15 +22,7 @@ class Enhancer:
         self.enhancer_sample_rate = self.enhancer.sample_rate()
         self.enhancer_hop_size = self.enhancer.hop_size()
 
-    def enhance(
-        self,
-        audio,  # 1, T
-        sample_rate,
-        f0,  # 1, n_frames, 1
-        hop_size,
-        adaptive_key=0,
-        silence_front=0,
-    ):
+    def enhance(self, audio, sample_rate, f0, hop_size, adaptive_key=0, silence_front=0):  # 1, T  # 1, n_frames, 1
         # enhancer start time
         start_frame = int(silence_front * sample_rate / hop_size)
         real_silence_front = start_frame * hop_size / sample_rate
@@ -39,9 +31,7 @@ class Enhancer:
 
         # adaptive parameters
         adaptive_factor = 2 ** (-adaptive_key / 12)
-        adaptive_sample_rate = 100 * int(
-            np.round(self.enhancer_sample_rate / adaptive_factor / 100)
-        )
+        adaptive_sample_rate = 100 * int(np.round(self.enhancer_sample_rate / adaptive_factor / 100))
         real_factor = self.enhancer_sample_rate / adaptive_sample_rate
 
         # resample the ddsp output
@@ -61,13 +51,9 @@ class Enhancer:
         f0_np = f0.squeeze(0).squeeze(-1).cpu().numpy()
         f0_np *= real_factor
         time_org = (hop_size / sample_rate) * np.arange(len(f0_np)) / real_factor
-        time_frame = (self.enhancer_hop_size / self.enhancer_sample_rate) * np.arange(
-            n_frames
-        )
+        time_frame = (self.enhancer_hop_size / self.enhancer_sample_rate) * np.arange(n_frames)
         f0_res = np.interp(time_frame, time_org, f0_np, left=f0_np[0], right=f0_np[-1])
-        f0_res = (
-            torch.from_numpy(f0_res).unsqueeze(0).float().to(self.device)
-        )  # 1, n_frames
+        f0_res = torch.from_numpy(f0_res).unsqueeze(0).float().to(self.device)  # 1, n_frames
 
         # enhance
         enhanced_audio, enhancer_sample_rate = self.enhancer(audio_res, f0_res)
@@ -83,10 +69,7 @@ class Enhancer:
 
         # pad the silence frames
         if start_frame > 0:
-            enhanced_audio = F.pad(
-                enhanced_audio,
-                (int(np.round(enhancer_sample_rate * real_silence_front)), 0),
-            )
+            enhanced_audio = F.pad(enhanced_audio, (int(np.round(enhancer_sample_rate * real_silence_front)), 0))
 
         return enhanced_audio, enhancer_sample_rate
 

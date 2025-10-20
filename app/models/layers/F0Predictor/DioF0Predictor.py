@@ -39,9 +39,7 @@ class DioF0Predictor(F0Predictor):
         source = np.array(x)
         source[source < 0.001] = np.nan
         target = np.interp(
-            np.arange(0, len(source) * target_len, len(source)) / target_len,
-            np.arange(0, len(source)),
-            source,
+            np.arange(0, len(source) * target_len, len(source)) / target_len, np.arange(0, len(source)), source
         )
         res = np.nan_to_num(target)
         return res

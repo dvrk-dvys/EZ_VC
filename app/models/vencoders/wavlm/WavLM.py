@@ -120,10 +120,7 @@ def compute_mask_indices(
             parts = [(0, sz)]
             min_length = min(lengths)
             for length in sorted(lengths, reverse=True):
-                lens = np.fromiter(
-                    (e - s if e - s >= length + min_space else 0 for s, e in parts),
-                    np.int,
-                )
+                lens = np.fromiter((e - s if e - s >= length + min_space else 0 for s, e in parts), np.int)
                 l_sum = np.sum(lens)
                 if l_sum == 0:
                     break
@@ -139,13 +136,7 @@ def compute_mask_indices(
 
             mask_idc = np.random.choice(sz - min_len, num_mask, replace=False)
 
-            mask_idc = np.asarray(
-                [
-                    mask_idc[j] + offset
-                    for j in range(len(mask_idc))
-                    for offset in range(lengths[j])
-                ]
-            )
+            mask_idc = np.asarray([mask_idc[j] + offset for j in range(len(mask_idc)) for offset in range(lengths[j])])
 
         mask_idcs.append(np.unique(mask_idc[mask_idc < sz]))
 
@@ -175,29 +166,17 @@ class WavLMConfig:
             "[(512,10,5)] + [(512,3,2)] * 4 + [(512,2,2)] * 2"  # string describing convolutional feature extraction layers in form of a python list that contains [(dim, kernel_size, stride), ...]
         )
         self.conv_bias: bool = False  # include bias in conv encoder
-        self.feature_grad_mult: float = (
-            1.0  # multiply feature extractor var grads by this
-        )
+        self.feature_grad_mult: float = 1.0  # multiply feature extractor var grads by this
 
-        self.normalize: bool = (
-            False  # normalize input to have 0 mean and unit variance during training
-        )
+        self.normalize: bool = False  # normalize input to have 0 mean and unit variance during training
 
         # dropouts
         self.dropout: float = 0.1  # dropout probability for the transformer
         self.attention_dropout: float = 0.1  # dropout probability for attention weights
-        self.activation_dropout: float = (
-            0.0  # dropout probability after activation in FFN
-        )
-        self.encoder_layerdrop: float = (
-            0.0  # probability of dropping a tarnsformer layer
-        )
-        self.dropout_input: float = (
-            0.0  # dropout to apply to the input (after feat extr)
-        )
-        self.dropout_features: float = (
-            0.0  # dropout to apply to the features (after feat extr)
-        )
+        self.activation_dropout: float = 0.0  # dropout probability after activation in FFN
+        self.encoder_layerdrop: float = 0.0  # probability of dropping a tarnsformer layer
+        self.dropout_input: float = 0.0  # dropout to apply to the input (after feat extr)
+        self.dropout_features: float = 0.0  # dropout to apply to the features (after feat extr)
 
         # masking
         self.mask_length: int = 10  # mask length
@@ -207,42 +186,26 @@ class WavLMConfig:
             0  # secondary mask argument (used for more complex distributions), see help in compute_mask_indicesh
         )
         self.no_mask_overlap: bool = False  # whether to allow masks to overlap
-        self.mask_min_space: int = (
-            1  # min space between spans (if no overlap is enabled)
-        )
+        self.mask_min_space: int = 1  # min space between spans (if no overlap is enabled)
 
         # channel masking
         self.mask_channel_length: int = 10  # length of the mask for features (channels)
         self.mask_channel_prob: float = 0.0  # probability of replacing a feature with 0
-        self.mask_channel_selection: str = (
-            "static"  # how to choose mask length for channel masking
-        )
+        self.mask_channel_selection: str = "static"  # how to choose mask length for channel masking
         self.mask_channel_other: float = (
             0  # secondary mask argument (used for more complex distributions), see help in compute_mask_indices
         )
-        self.no_mask_channel_overlap: bool = (
-            False  # whether to allow channel masks to overlap
-        )
-        self.mask_channel_min_space: int = (
-            1  # min space between spans (if no overlap is enabled)
-        )
+        self.no_mask_channel_overlap: bool = False  # whether to allow channel masks to overlap
+        self.mask_channel_min_space: int = 1  # min space between spans (if no overlap is enabled)
 
         # positional embeddings
-        self.conv_pos: int = (
-            128  # number of filters for convolutional positional embeddings
-        )
-        self.conv_pos_groups: int = (
-            16  # number of groups for convolutional positional embedding
-        )
+        self.conv_pos: int = 128  # number of filters for convolutional positional embeddings
+        self.conv_pos_groups: int = 16  # number of groups for convolutional positional embedding
 
         # relative position embedding
-        self.relative_position_embedding: bool = (
-            False  # apply relative position embedding
-        )
+        self.relative_position_embedding: bool = False  # apply relative position embedding
         self.num_buckets: int = 320  # number of buckets for relative position embedding
-        self.max_distance: int = (
-            1280  # maximum distance for relative position embedding
-        )
+        self.max_distance: int = 1280  # maximum distance for relative position embedding
         self.gru_rel_pos: bool = False  # apply gated relative position embedding
 
         if cfg is not None:
@@ -253,10 +216,7 @@ class WavLMConfig:
 
 
 class WavLM(nn.Module):
-    def __init__(
-        self,
-        cfg: WavLMConfig,
-    ) -> None:
+    def __init__(self, cfg: WavLMConfig) -> None:
         super().__init__()
         logger.info(f"WavLM Config: {cfg.__dict__}")
 
@@ -265,16 +225,11 @@ class WavLM(nn.Module):
         self.embed = feature_enc_layers[-1][0]
 
         self.feature_extractor = ConvFeatureExtractionModel(
-            conv_layers=feature_enc_layers,
-            dropout=0.0,
-            mode=cfg.extractor_mode,
-            conv_bias=cfg.conv_bias,
+            conv_layers=feature_enc_layers, dropout=0.0, mode=cfg.extractor_mode, conv_bias=cfg.conv_bias
         )
 
         self.post_extract_proj = (
-            nn.Linear(self.embed, cfg.encoder_embed_dim)
-            if self.embed != cfg.encoder_embed_dim
-            else None
+            nn.Linear(self.embed, cfg.encoder_embed_dim) if self.embed != cfg.encoder_embed_dim else None
         )
 
         self.mask_prob = cfg.mask_prob
@@ -296,9 +251,7 @@ class WavLM(nn.Module):
 
         self.feature_grad_mult = cfg.feature_grad_mult
 
-        self.mask_emb = nn.Parameter(
-            torch.FloatTensor(cfg.encoder_embed_dim).uniform_()
-        )
+        self.mask_emb = nn.Parameter(torch.FloatTensor(cfg.encoder_embed_dim).uniform_())
 
         self.encoder = TransformerEncoder(cfg)
         self.layer_norm = LayerNorm(self.embed)
@@ -333,21 +286,12 @@ class WavLM(nn.Module):
                 no_overlap=self.no_mask_channel_overlap,
                 min_space=self.mask_channel_min_space,
             )
-            mask_channel_indices = (
-                torch.from_numpy(mask_channel_indices)
-                .to(x.device)
-                .unsqueeze(1)
-                .expand(-1, T, -1)
-            )
+            mask_channel_indices = torch.from_numpy(mask_channel_indices).to(x.device).unsqueeze(1).expand(-1, T, -1)
             x[mask_channel_indices] = 0
 
         return x, mask_indices
 
-    def forward_padding_mask(
-        self,
-        features: torch.Tensor,
-        padding_mask: torch.Tensor,
-    ) -> torch.Tensor:
+    def forward_padding_mask(self, features: torch.Tensor, padding_mask: torch.Tensor) -> torch.Tensor:
         extra = padding_mask.size(1) % features.size(1)
         if extra > 0:
             padding_mask = padding_mask[:, :-extra]
@@ -395,17 +339,10 @@ class WavLM(nn.Module):
         # padding_mask: (B, T), bool
         # mask_indices: (B, T), bool
         x, layer_results = self.encoder(
-            x,
-            padding_mask=padding_mask,
-            layer=None if output_layer is None else output_layer - 1,
+            x, padding_mask=padding_mask, layer=None if output_layer is None else output_layer - 1
         )
 
-        res = {
-            "x": x,
-            "padding_mask": padding_mask,
-            "features": features,
-            "layer_results": layer_results,
-        }
+        res = {"x": x, "padding_mask": padding_mask, "features": features, "layer_results": layer_results}
 
         feature = res["features"] if ret_conv else res["x"]
         if ret_layer_results:
@@ -426,41 +363,24 @@ class ConvFeatureExtractionModel(nn.Module):
 
         assert mode in {"default", "layer_norm"}
 
-        def block(
-            n_in,
-            n_out,
-            k,
-            stride,
-            is_layer_norm=False,
-            is_group_norm=False,
-            conv_bias=False,
-        ):
+        def block(n_in, n_out, k, stride, is_layer_norm=False, is_group_norm=False, conv_bias=False):
             def make_conv():
                 conv = nn.Conv1d(n_in, n_out, k, stride=stride, bias=conv_bias)
                 nn.init.kaiming_normal_(conv.weight)
                 return conv
 
-            assert (
-                is_layer_norm and is_group_norm
-            ) is False, "layer norm and group norm are exclusive"
+            assert (is_layer_norm and is_group_norm) is False, "layer norm and group norm are exclusive"
 
             if is_layer_norm:
                 return nn.Sequential(
                     make_conv(),
                     nn.Dropout(p=dropout),
-                    nn.Sequential(
-                        TransposeLast(),
-                        Fp32LayerNorm(dim, elementwise_affine=True),
-                        TransposeLast(),
-                    ),
+                    nn.Sequential(TransposeLast(), Fp32LayerNorm(dim, elementwise_affine=True), TransposeLast()),
                     nn.GELU(),
                 )
             elif is_group_norm:
                 return nn.Sequential(
-                    make_conv(),
-                    nn.Dropout(p=dropout),
-                    Fp32GroupNorm(dim, dim, affine=True),
-                    nn.GELU(),
+                    make_conv(), nn.Dropout(p=dropout), Fp32GroupNorm(dim, dim, affine=True), nn.GELU()
                 )
             else:
                 return nn.Sequential(make_conv(), nn.Dropout(p=dropout), nn.GELU())
@@ -502,16 +422,12 @@ class ConvFeatureExtractionModel(nn.Module):
             for i, cl in enumerate(conv_layers):
                 assert len(cl) == 3
                 (dim, k, stride) = cl
-                self.conv_layers.append(
-                    torch.nn.Conv2d(in_d, dim, k, stride, padding=1)
-                )
+                self.conv_layers.append(torch.nn.Conv2d(in_d, dim, k, stride, padding=1))
                 self.conv_layers.append(torch.nn.LayerNorm([dim, idim]))
                 self.conv_layers.append(torch.nn.ReLU())
                 in_d = dim
                 if (i + 1) % 2 == 0:
-                    self.conv_layers.append(
-                        torch.nn.MaxPool2d(2, stride=2, ceil_mode=True)
-                    )
+                    self.conv_layers.append(torch.nn.MaxPool2d(2, stride=2, ceil_mode=True))
                     idim = int(math.ceil(idim / 2))
         else:
             pass
@@ -580,9 +496,7 @@ class TransformerEncoder(nn.Module):
                     activation_dropout=args.activation_dropout,
                     activation_fn=args.activation_fn,
                     layer_norm_first=args.layer_norm_first,
-                    has_relative_attention_bias=(
-                        self.relative_position_embedding and i == 0
-                    ),
+                    has_relative_attention_bias=(self.relative_position_embedding and i == 0),
                     num_buckets=self.num_buckets,
                     max_distance=self.max_distance,
                     gru_rel_pos=args.gru_rel_pos,
@@ -605,9 +519,7 @@ class TransformerEncoder(nn.Module):
 
         return x, layer_results
 
-    def extract_features(
-        self, x, padding_mask=None, streaming_mask=None, tgt_layer=None
-    ):
+    def extract_features(self, x, padding_mask=None, streaming_mask=None, tgt_layer=None):
 
         if padding_mask is not None:
             x[padding_mask] = 0

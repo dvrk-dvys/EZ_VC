@@ -55,9 +55,7 @@ def del_old_checkpoints(cp_dir, prefix, n_models=2):
     cp_list = glob.glob(pattern)  # get checkpoint paths
     cp_list = sorted(cp_list)  # sort by iter
     if len(cp_list) > n_models:  # if more than n_models model_dir are found
-        for cp in cp_list[
-            :-n_models
-        ]:  # delete the oldest model_dir other than lastest n_models
+        for cp in cp_list[:-n_models]:  # delete the oldest model_dir other than lastest n_models
             open(cp, "w").close()  # empty file contents
             os.unlink(cp)  # delete file (move to trash when using Colab)
 

@@ -4,16 +4,11 @@ from vencoder import SpeechEncoder
 
 
 class ContentVec768L12(SpeechEncoder):
-    def __init__(
-        self, vec_path="./model_dir/pretrain/checkpoint_best_legacy_500.pt", device=None
-    ):
+    def __init__(self, vec_path="./model_dir/pretrain/checkpoint_best_legacy_500.pt", device=None):
         super().__init__()
         print("load model(s) from {}".format(vec_path))
         self.hidden_dim = 768
-        models, saved_cfg, task = checkpoint_utils.load_model_ensemble_and_task(
-            [vec_path],
-            suffix="",
-        )
+        models, saved_cfg, task = checkpoint_utils.load_model_ensemble_and_task([vec_path], suffix="")
         if device is None:
             self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:

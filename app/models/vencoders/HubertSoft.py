@@ -8,23 +8,17 @@ from app.utils.utils import is_running_in_colab
 
 
 class HubertSoft(SpeechEncoder):
-    def __init__(
-        self, vec_path="./model_dir/pretrain/hubert-soft-0d54a1f4.pt", device=None
-    ):
+    def __init__(self, vec_path="./model_dir/pretrain/hubert-soft-0d54a1f4.pt", device=None):
         super().__init__()
         print("load model(s) from {}".format(vec_path))
 
         def find_project_root(target_file):
             """Find the root directory of the project based on the existence of a specific target file."""
-            current_path = os.path.dirname(
-                os.path.abspath(__file__)
-            )  # Start from the current script location
+            current_path = os.path.dirname(os.path.abspath(__file__))  # Start from the current script location
             while not os.path.isfile(os.path.join(current_path, target_file)):
                 current_path = os.path.dirname(current_path)
                 if current_path == "/":
-                    raise FileNotFoundError(
-                        f"Cannot find the root directory based on the target file: {target_file}"
-                    )
+                    raise FileNotFoundError(f"Cannot find the root directory based on the target file: {target_file}")
             return current_path
 
         if is_running_in_colab == True:

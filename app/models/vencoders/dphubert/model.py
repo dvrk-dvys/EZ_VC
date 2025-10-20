@@ -42,11 +42,7 @@ class Wav2Vec2Model(Module):
     """  # noqa: E501
 
     def __init__(
-        self,
-        normalize_waveform: bool,
-        feature_extractor: Module,
-        encoder: Module,
-        aux: Optional[Module] = None,
+        self, normalize_waveform: bool, feature_extractor: Module, encoder: Module, aux: Optional[Module] = None
     ):
         super().__init__()
         self.normalize_waveform = normalize_waveform
@@ -56,10 +52,7 @@ class Wav2Vec2Model(Module):
 
     @torch.jit.export
     def extract_features(
-        self,
-        waveforms: Tensor,
-        lengths: Optional[Tensor] = None,
-        num_layers: Optional[int] = None,
+        self, waveforms: Tensor, lengths: Optional[Tensor] = None, num_layers: Optional[int] = None
     ) -> Tuple[List[Tensor], Optional[Tensor]]:
         """Extract feature vectors from raw waveforms
 
@@ -95,56 +88,34 @@ class Wav2Vec2Model(Module):
         """
         if self.normalize_waveform:
             if lengths is not None:
-                waveforms = [
-                    F.layer_norm(wave[:length], (length,))
-                    for wave, length in zip(waveforms, lengths)
-                ]
+                waveforms = [F.layer_norm(wave[:length], (length,)) for wave, length in zip(waveforms, lengths)]
                 waveforms = torch.nn.utils.rnn.pad_sequence(waveforms, batch_first=True)
             else:
                 waveforms = F.layer_norm(waveforms, waveforms.shape[-1:])
 
         x, lengths = self.feature_extractor(waveforms, lengths)
-        x = self.encoder.extract_features(
-            x, lengths, num_layers
-        )  # (num_layers+1,), including the input
+        x = self.encoder.extract_features(x, lengths, num_layers)  # (num_layers+1,), including the input
         return x, lengths
 
     def get_num_params(self):
         """Calculate the current size."""
-        feature_extractor_size, encoder_in_features = (
-            self.feature_extractor.get_num_params_and_final_out_channels()
-        )
+        feature_extractor_size, encoder_in_features = self.feature_extractor.get_num_params_and_final_out_channels()
         encoder_size = self.encoder.get_num_params(encoder_in_features)
         return feature_extractor_size + encoder_size
 
     def prune(self):
         self.eval()  # must be in eval mode
-        conv_config, conv_out_index = (
-            self.feature_extractor.prune()
-        )  # [(output_channel, kernel_size, stride), ...]
-        transformer_config = self.encoder.prune(
-            conv_out_index
-        )  # NOTE: this is a defaultdict(list)
+        conv_config, conv_out_index = self.feature_extractor.prune()  # [(output_channel, kernel_size, stride), ...]
+        transformer_config = self.encoder.prune(conv_out_index)  # NOTE: this is a defaultdict(list)
         use_attention = transformer_config["use_attention"]
         use_feed_forward = transformer_config["use_feed_forward"]
         num_heads = transformer_config["num_heads"]  # can be []
         remaining_heads = transformer_config["remaining_heads"]  # can be []
         ff_interm_features = transformer_config["ff_interm_features"]
 
-        return (
-            conv_config,
-            use_attention,
-            use_feed_forward,
-            num_heads,
-            remaining_heads,
-            ff_interm_features,
-        )
+        return (conv_config, use_attention, use_feed_forward, num_heads, remaining_heads, ff_interm_features)
 
-    def forward(
-        self,
-        waveforms: Tensor,
-        lengths: Optional[Tensor] = None,
-    ) -> Tuple[Tensor, Optional[Tensor]]:
+    def forward(self, waveforms: Tensor, lengths: Optional[Tensor] = None) -> Tuple[Tensor, Optional[Tensor]]:
         """Compute the sequence of probability distribution over labels.
 
         Args:
@@ -171,10 +142,7 @@ class Wav2Vec2Model(Module):
         """
         if self.normalize_waveform:
             if lengths is not None:
-                waveforms = [
-                    F.layer_norm(wave[:length], (length,))
-                    for wave, length in zip(waveforms, lengths)
-                ]
+                waveforms = [F.layer_norm(wave[:length], (length,)) for wave, length in zip(waveforms, lengths)]
                 waveforms = torch.nn.utils.rnn.pad_sequence(waveforms, batch_first=True)
             else:
                 waveforms = F.layer_norm(waveforms, waveforms.shape[-1:])
@@ -344,9 +312,7 @@ def wav2vec2_model_original(
             The resulting model.
     """  # noqa: E501
     if extractor_conv_layer_config is None:
-        extractor_conv_layer_config = (
-            [(512, 10, 5)] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
-        )
+        extractor_conv_layer_config = [(512, 10, 5)] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
 
     feature_extractor = components._get_feature_extractor(
         extractor_mode,
@@ -847,9 +813,7 @@ def wavlm_model(
             The resulting model.
     """
     if extractor_conv_layer_config is None:
-        extractor_conv_layer_config = (
-            [(512, 10, 5)] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
-        )
+        extractor_conv_layer_config = [(512, 10, 5)] + [(512, 3, 2)] * 4 + [(512, 2, 2)] * 2
 
     feature_extractor = components._get_feature_extractor(
         extractor_mode,

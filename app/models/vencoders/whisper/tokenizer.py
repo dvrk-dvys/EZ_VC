@@ -137,9 +137,7 @@ class Tokenizer:
     def encode(self, text, **kwargs):
         return self.tokenizer.encode(text, **kwargs)
 
-    def decode(
-        self, token_ids: Union[int, List[int], np.ndarray, torch.Tensor], **kwargs
-    ):
+    def decode(self, token_ids: Union[int, List[int], np.ndarray, torch.Tensor], **kwargs):
         return self.tokenizer.decode(token_ids, **kwargs)
 
     def decode_with_timestamps(self, tokens) -> str:
@@ -155,9 +153,7 @@ class Tokenizer:
                 outputs.append([])
             else:
                 outputs[-1].append(token)
-        outputs = [
-            s if isinstance(s, str) else self.tokenizer.decode(s) for s in outputs
-        ]
+        outputs = [s if isinstance(s, str) else self.tokenizer.decode(s) for s in outputs]
         return "".join(outputs)
 
     @property
@@ -203,10 +199,7 @@ class Tokenizer:
             raise ValueError("This tokenizer does not have language token configured")
 
         additional_tokens = dict(
-            zip(
-                self.tokenizer.additional_special_tokens,
-                self.tokenizer.additional_special_tokens_ids,
-            )
+            zip(self.tokenizer.additional_special_tokens, self.tokenizer.additional_special_tokens_ids)
         )
         candidate = f"<|{self.language}|>"
         if candidate in additional_tokens:
@@ -219,8 +212,7 @@ class Tokenizer:
     def all_language_tokens(self) -> Tuple[int]:
         result = []
         for token, token_id in zip(
-            self.tokenizer.additional_special_tokens,
-            self.tokenizer.additional_special_tokens_ids,
+            self.tokenizer.additional_special_tokens, self.tokenizer.additional_special_tokens_ids
         ):
             if token.strip("<|>") in LANGUAGES:
                 result.append(token_id)
@@ -250,9 +242,7 @@ class Tokenizer:
         keeping basic punctuations like commas, periods, question marks, exclamation points, etc.
         """
         symbols = list('"#()*+/:;<=>@[\\]^_`{|}~「」『』')
-        symbols += (
-            "<< >> <<< >>> -- --- -( -[ (' (\" (( )) ((( ))) [[ ]] {{ }} ♪♪ ♪♪♪".split()
-        )
+        symbols += "<< >> <<< >>> -- --- -( -[ (' (\" (( )) ((( ))) [[ ]] {{ }} ♪♪ ♪♪♪".split()
 
         # symbols that may be a single token or multiple tokens depending on the tokenizer.
         # In case they're multiple tokens, suppress the first token, which is safe because:
@@ -264,10 +254,7 @@ class Tokenizer:
         # allow hyphens "-" and single quotes "'" between words, but not at the beginning of a word
         result = {self.tokenizer.encode(" -")[0], self.tokenizer.encode(" '")[0]}
         for symbol in symbols + list(miscellaneous):
-            for tokens in [
-                self.tokenizer.encode(symbol),
-                self.tokenizer.encode(" " + symbol),
-            ]:
+            for tokens in [self.tokenizer.encode(symbol), self.tokenizer.encode(" " + symbol)]:
                 if len(tokens) == 1 or symbol in miscellaneous:
                     result.add(tokens[0])
 
@@ -337,6 +324,4 @@ def get_tokenizer(
     if task is not None:
         sot_sequence.append(transcribe if task == "transcribe" else translate)
 
-    return Tokenizer(
-        tokenizer=tokenizer, language=language, sot_sequence=tuple(sot_sequence)
-    )
+    return Tokenizer(tokenizer=tokenizer, language=language, sot_sequence=tuple(sot_sequence))

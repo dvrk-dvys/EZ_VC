@@ -43,9 +43,7 @@ class ConvBlockRes(nn.Module):
 
 
 class ResEncoderBlock(nn.Module):
-    def __init__(
-        self, in_channels, out_channels, kernel_size, n_blocks=1, momentum=0.01
-    ):
+    def __init__(self, in_channels, out_channels, kernel_size, n_blocks=1, momentum=0.01):
         super(ResEncoderBlock, self).__init__()
         self.n_blocks = n_blocks
         self.conv = nn.ModuleList()
@@ -97,27 +95,14 @@ class ResDecoderBlock(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(
-        self,
-        in_channels,
-        in_size,
-        n_encoders,
-        kernel_size,
-        n_blocks,
-        out_channels=16,
-        momentum=0.01,
-    ):
+    def __init__(self, in_channels, in_size, n_encoders, kernel_size, n_blocks, out_channels=16, momentum=0.01):
         super(Encoder, self).__init__()
         self.n_encoders = n_encoders
         self.bn = nn.BatchNorm2d(in_channels, momentum=momentum)
         self.layers = nn.ModuleList()
         self.latent_channels = []
         for i in range(self.n_encoders):
-            self.layers.append(
-                ResEncoderBlock(
-                    in_channels, out_channels, kernel_size, n_blocks, momentum=momentum
-                )
-            )
+            self.layers.append(ResEncoderBlock(in_channels, out_channels, kernel_size, n_blocks, momentum=momentum))
             self.latent_channels.append([out_channels, in_size])
             in_channels = out_channels
             out_channels *= 2
@@ -139,13 +124,9 @@ class Intermediate(nn.Module):
         super(Intermediate, self).__init__()
         self.n_inters = n_inters
         self.layers = nn.ModuleList()
-        self.layers.append(
-            ResEncoderBlock(in_channels, out_channels, None, n_blocks, momentum)
-        )
+        self.layers.append(ResEncoderBlock(in_channels, out_channels, None, n_blocks, momentum))
         for i in range(self.n_inters - 1):
-            self.layers.append(
-                ResEncoderBlock(out_channels, out_channels, None, n_blocks, momentum)
-            )
+            self.layers.append(ResEncoderBlock(out_channels, out_channels, None, n_blocks, momentum))
 
     def forward(self, x):
         for i in range(self.n_inters):
@@ -160,9 +141,7 @@ class Decoder(nn.Module):
         self.n_decoders = n_decoders
         for i in range(self.n_decoders):
             out_channels = in_channels // 2
-            self.layers.append(
-                ResDecoderBlock(in_channels, out_channels, stride, n_blocks, momentum)
-            )
+            self.layers.append(ResDecoderBlock(in_channels, out_channels, stride, n_blocks, momentum))
             in_channels = out_channels
 
     def forward(self, x, concat_tensors):
@@ -186,29 +165,14 @@ class TimbreFilter(nn.Module):
 
 
 class DeepUnet(nn.Module):
-    def __init__(
-        self,
-        kernel_size,
-        n_blocks,
-        en_de_layers=5,
-        inter_layers=4,
-        in_channels=1,
-        en_out_channels=16,
-    ):
+    def __init__(self, kernel_size, n_blocks, en_de_layers=5, inter_layers=4, in_channels=1, en_out_channels=16):
         super(DeepUnet, self).__init__()
-        self.encoder = Encoder(
-            in_channels, N_MELS, en_de_layers, kernel_size, n_blocks, en_out_channels
-        )
+        self.encoder = Encoder(in_channels, N_MELS, en_de_layers, kernel_size, n_blocks, en_out_channels)
         self.intermediate = Intermediate(
-            self.encoder.out_channel // 2,
-            self.encoder.out_channel,
-            inter_layers,
-            n_blocks,
+            self.encoder.out_channel // 2, self.encoder.out_channel, inter_layers, n_blocks
         )
         self.tf = TimbreFilter(self.encoder.latent_channels)
-        self.decoder = Decoder(
-            self.encoder.out_channel, en_de_layers, kernel_size, n_blocks
-        )
+        self.decoder = Decoder(self.encoder.out_channel, en_de_layers, kernel_size, n_blocks)
 
     def forward(self, x):
         x, concat_tensors = self.encoder(x)
@@ -219,29 +183,14 @@ class DeepUnet(nn.Module):
 
 
 class DeepUnet0(nn.Module):
-    def __init__(
-        self,
-        kernel_size,
-        n_blocks,
-        en_de_layers=5,
-        inter_layers=4,
-        in_channels=1,
-        en_out_channels=16,
-    ):
+    def __init__(self, kernel_size, n_blocks, en_de_layers=5, inter_layers=4, in_channels=1, en_out_channels=16):
         super(DeepUnet0, self).__init__()
-        self.encoder = Encoder(
-            in_channels, N_MELS, en_de_layers, kernel_size, n_blocks, en_out_channels
-        )
+        self.encoder = Encoder(in_channels, N_MELS, en_de_layers, kernel_size, n_blocks, en_out_channels)
         self.intermediate = Intermediate(
-            self.encoder.out_channel // 2,
-            self.encoder.out_channel,
-            inter_layers,
-            n_blocks,
+            self.encoder.out_channel // 2, self.encoder.out_channel, inter_layers, n_blocks
         )
         self.tf = TimbreFilter(self.encoder.latent_channels)
-        self.decoder = Decoder(
-            self.encoder.out_channel, en_de_layers, kernel_size, n_blocks
-        )
+        self.decoder = Decoder(self.encoder.out_channel, en_de_layers, kernel_size, n_blocks)
 
     def forward(self, x):
         x, concat_tensors = self.encoder(x)
