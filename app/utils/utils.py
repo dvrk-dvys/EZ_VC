@@ -10,7 +10,7 @@ import sys
 import traceback
 from multiprocessing import cpu_count
 
-import faiss
+# import faiss  # Commented out - not used in So-VITS architecture
 import librosa
 import numpy as np
 import torch
@@ -124,30 +124,21 @@ def get_f0_predictor(f0_predictor, hop_length, sampling_rate, **kargs):
     if f0_predictor == "pm":
         from data.model_dir import PMF0Predictor
 
-        f0_predictor_object = PMF0Predictor(
-            hop_length=hop_length, sampling_rate=sampling_rate
-        )
+        f0_predictor_object = PMF0Predictor(hop_length=hop_length, sampling_rate=sampling_rate)
     elif f0_predictor == "crepe":
         from data.model_dir import CrepeF0Predictor
 
         f0_predictor_object = CrepeF0Predictor(
-            hop_length=hop_length,
-            sampling_rate=sampling_rate,
-            device=kargs["device"],
-            threshold=kargs["threshold"],
+            hop_length=hop_length, sampling_rate=sampling_rate, device=kargs["device"], threshold=kargs["threshold"]
         )
     elif f0_predictor == "harvest":
         from data.model_dir import HarvestF0Predictor
 
-        f0_predictor_object = HarvestF0Predictor(
-            hop_length=hop_length, sampling_rate=sampling_rate
-        )
+        f0_predictor_object = HarvestF0Predictor(hop_length=hop_length, sampling_rate=sampling_rate)
     elif f0_predictor == "dio":
         from data.model_dir import DioF0Predictor
 
-        f0_predictor_object = DioF0Predictor(
-            hop_length=hop_length, sampling_rate=sampling_rate
-        )
+        f0_predictor_object = DioF0Predictor(hop_length=hop_length, sampling_rate=sampling_rate)
     elif f0_predictor == "rmvpe":
         from data.model_dir import RMVPEF0Predictor
 
@@ -249,11 +240,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
         iteration = checkpoint_dict["info"]
         learning_rate = 0.0001
 
-    if (
-        optimizer is not None
-        and not skip_optimizer
-        and checkpoint_dict["optimizer"] is not None
-    ):
+    if optimizer is not None and not skip_optimizer and checkpoint_dict["optimizer"] is not None:
         optimizer.load_state_dict(checkpoint_dict["optimizer"])
     saved_state_dict = checkpoint_dict["model"]
     model = model.to(list(saved_state_dict.values())[0].dtype)
@@ -267,10 +254,7 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
             # assert "dec" in k or "disc" in k
             # print("load", k)
             new_state_dict[k] = saved_state_dict[k]
-            assert saved_state_dict[k].shape == v.shape, (
-                saved_state_dict[k].shape,
-                v.shape,
-            )
+            assert saved_state_dict[k].shape == v.shape, (saved_state_dict[k].shape, v.shape)
         except Exception:
             if "enc_q" not in k or "emb_g" not in k:
                 print(
@@ -284,18 +268,12 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, skip_optimizer=False
     else:
         model.load_state_dict(new_state_dict)
     print("load ")
-    logger.info(
-        "Loaded checkpoint '{}' (iteration {})".format(checkpoint_path, iteration)
-    )
+    logger.info("Loaded checkpoint '{}' (iteration {})".format(checkpoint_path, iteration))
     return model, optimizer, learning_rate, iteration
 
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path):
-    logger.info(
-        "Saving model and optimizer state at iteration {} to {}".format(
-            iteration, checkpoint_path
-        )
-    )
+    logger.info("Saving model and optimizer state at iteration {} to {}".format(iteration, checkpoint_path))
     if hasattr(model, "module"):
         state_dict = model.module.state_dict()
     else:
@@ -320,11 +298,7 @@ def clean_checkpoints(path_to_models="logs/44k/", n_ckpts_to_keep=2, sort_by_tim
     sort_by_time      --  True -> chronologically delete ckpts
                           False -> lexicographically delete ckpts
     """
-    ckpts_files = [
-        f
-        for f in os.listdir(path_to_models)
-        if os.path.isfile(os.path.join(path_to_models, f))
-    ]
+    ckpts_files = [f for f in os.listdir(path_to_models) if os.path.isfile(os.path.join(path_to_models, f))]
 
     def name_key(_f):
         return int(re.compile("._(\\d+)\\.pth").match(_f).group(1))
@@ -335,14 +309,10 @@ def clean_checkpoints(path_to_models="logs/44k/", n_ckpts_to_keep=2, sort_by_tim
     sort_key = time_key if sort_by_time else name_key
 
     def x_sorted(_x):
-        return sorted(
-            [f for f in ckpts_files if f.startswith(_x) and not f.endswith("_0.pth")],
-            key=sort_key,
-        )
+        return sorted([f for f in ckpts_files if f.startswith(_x) and not f.endswith("_0.pth")], key=sort_key)
 
     to_del = [
-        os.path.join(path_to_models, fn)
-        for fn in (x_sorted("G")[:-n_ckpts_to_keep] + x_sorted("D")[:-n_ckpts_to_keep])
+        os.path.join(path_to_models, fn) for fn in (x_sorted("G")[:-n_ckpts_to_keep] + x_sorted("D")[:-n_ckpts_to_keep])
     ]
 
     def del_info(fn):
@@ -354,15 +324,7 @@ def clean_checkpoints(path_to_models="logs/44k/", n_ckpts_to_keep=2, sort_by_tim
     [del_routine(fn) for fn in to_del]
 
 
-def summarize(
-    writer,
-    global_step,
-    scalars={},
-    histograms={},
-    images={},
-    audios={},
-    audio_sampling_rate=22050,
-):
+def summarize(writer, global_step, scalars={}, histograms={}, images={}, audios={}, audio_sampling_rate=22050):
     for k, v in scalars.items():
         writer.add_scalar(k, v, global_step)
     for k, v in histograms.items():
@@ -420,9 +382,7 @@ def plot_alignment_to_numpy(alignment, info=None):
     import numpy as np
 
     fig, ax = plt.subplots(figsize=(6, 4))
-    im = ax.imshow(
-        alignment.transpose(), aspect="auto", origin="lower", interpolation="none"
-    )
+    im = ax.imshow(alignment.transpose(), aspect="auto", origin="lower", interpolation="none")
     fig.colorbar(im, ax=ax)
     xlabel = "Decoder timestep"
     if info is not None:
@@ -459,21 +419,9 @@ def get_hparams(init=True):
         help="JSON file for configuration",
     )
     parser.add_argument(
-        "-m",
-        "--model",
-        type=str,
-        default="sovits-pretrain-base-vec768",
-        required=True,
-        help="Model name",
+        "-m", "--model", type=str, default="sovits-pretrain-base-vec768", required=True, help="Model name"
     )
-    parser.add_argument(
-        "-md",
-        "--model_dir",
-        type=str,
-        default="./model_dir",
-        required=True,
-        help="Model name",
-    )
+    parser.add_argument("-md", "--model_dir", type=str, default="./model_dir", required=True, help="Model name")
 
     args = parser.parse_args()
     # model_dir = os.path.join("./logs", args.model)
@@ -525,11 +473,7 @@ def get_hparams_from_file(config_path, infer_mode=False):
 def check_git_hash(model_dir):
     source_dir = os.path.dirname(os.path.realpath(__file__))
     if not os.path.exists(os.path.join(source_dir, ".git")):
-        logger.warn(
-            "{} is not a git repository, therefore hash value comparison will be ignored.".format(
-                source_dir
-            )
-        )
+        logger.warn("{} is not a git repository, therefore hash value comparison will be ignored.".format(source_dir))
         return
 
     cur_hash = subprocess.getoutput("git rev-parse HEAD")
@@ -538,11 +482,7 @@ def check_git_hash(model_dir):
     if os.path.exists(path):
         saved_hash = open(path).read()
         if saved_hash != cur_hash:
-            logger.warn(
-                "git hash values are different. {}(saved) != {}(current)".format(
-                    saved_hash[:8], cur_hash[:8]
-                )
-            )
+            logger.warn("git hash values are different. {}(saved) != {}(current)".format(saved_hash[:8], cur_hash[:8]))
     else:
         open(path, "w").write(cur_hash)
 
@@ -575,9 +515,7 @@ def repeat_expand_2d_left(content, target_len):
     # content : [h, t]
 
     src_len = content.shape[-1]
-    target = torch.zeros([content.shape[0], target_len], dtype=torch.float).to(
-        content.device
-    )
+    target = torch.zeros([content.shape[0], target_len], dtype=torch.float).to(content.device)
     temp = torch.arange(src_len + 1) * target_len / src_len
     current_pos = 0
     for i in range(target_len):
@@ -612,28 +550,16 @@ def mix_model(model_paths, mix_rate, mode):
     return os.path.join(os.path.curdir, "output.pth")
 
 
-def change_rms(
-    data1, sr1, data2, sr2, rate
-):  # 1是输入音频，2是输出音频,rate是2的占比 from RVC
+def change_rms(data1, sr1, data2, sr2, rate):  # 1是输入音频，2是输出音频,rate是2的占比 from RVC
     # print(data1.max(),data2.max())
-    rms1 = librosa.feature.rms(
-        y=data1, frame_length=sr1 // 2 * 2, hop_length=sr1 // 2
-    )  # 每半秒一个点
-    rms2 = librosa.feature.rms(
-        y=data2.detach().cpu().numpy(), frame_length=sr2 // 2 * 2, hop_length=sr2 // 2
-    )
+    rms1 = librosa.feature.rms(y=data1, frame_length=sr1 // 2 * 2, hop_length=sr1 // 2)  # 每半秒一个点
+    rms2 = librosa.feature.rms(y=data2.detach().cpu().numpy(), frame_length=sr2 // 2 * 2, hop_length=sr2 // 2)
     rms1 = torch.from_numpy(rms1).to(data2.device)
-    rms1 = F.interpolate(
-        rms1.unsqueeze(0), size=data2.shape[0], mode="linear"
-    ).squeeze()
+    rms1 = F.interpolate(rms1.unsqueeze(0), size=data2.shape[0], mode="linear").squeeze()
     rms2 = torch.from_numpy(rms2).to(data2.device)
-    rms2 = F.interpolate(
-        rms2.unsqueeze(0), size=data2.shape[0], mode="linear"
-    ).squeeze()
+    rms2 = F.interpolate(rms2.unsqueeze(0), size=data2.shape[0], mode="linear").squeeze()
     rms2 = torch.max(rms2, torch.zeros_like(rms2) + 1e-6)
-    data2 *= torch.pow(rms1, torch.tensor(1 - rate)) * torch.pow(
-        rms2, torch.tensor(rate - 1)
-    )
+    data2 *= torch.pow(rms1, torch.tensor(1 - rate)) * torch.pow(rms2, torch.tensor(rate - 1))
     return data2
 
 
@@ -664,11 +590,7 @@ def train_index(
         try:
             big_npy = (
                 MiniBatchKMeans(
-                    n_clusters=10000,
-                    verbose=True,
-                    batch_size=256 * n_cpu,
-                    compute_labels=False,
-                    init="random",
+                    n_clusters=10000, verbose=True, batch_size=256 * n_cpu, compute_labels=False, init="random"
                 )
                 .fit(big_npy)
                 .cluster_centers_
@@ -677,8 +599,8 @@ def train_index(
             info = traceback.format_exc()
             print(info)
     n_ivf = min(int(16 * np.sqrt(big_npy.shape[0])), big_npy.shape[0] // 39)
-    index = faiss.index_factory(big_npy.shape[1], "IVF%s,Flat" % n_ivf)
-    index_ivf = faiss.extract_index_ivf(index)  #
+    # index = faiss.index_factory(big_npy.shape[1], "IVF%s,Flat" % n_ivf)  # Commented out - not used in So-VITS
+    # index_ivf = faiss.extract_index_ivf(index)  # Commented out - not used in So-VITS
     index_ivf.nprobe = 1
     index.train(big_npy)
     batch_size_add = 8192
@@ -748,12 +670,10 @@ class Volume_Extractor:
         n_frames = int(audio.size(-1) // self.hop_size)
         audio2 = audio**2
         audio2 = torch.nn.functional.pad(
-            audio2,
-            (int(self.hop_size // 2), int((self.hop_size + 1) // 2)),
-            mode="reflect",
+            audio2, (int(self.hop_size // 2), int((self.hop_size + 1) // 2)), mode="reflect"
         )
-        volume = torch.nn.functional.unfold(
-            audio2[:, None, None, :], (1, self.hop_size), stride=self.hop_size
-        )[:, :, :n_frames].mean(dim=1)[0]
+        volume = torch.nn.functional.unfold(audio2[:, None, None, :], (1, self.hop_size), stride=self.hop_size)[
+            :, :, :n_frames
+        ].mean(dim=1)[0]
         volume = torch.sqrt(volume)
         return volume

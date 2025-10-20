@@ -1,0 +1,69 @@
+name: ez_rvc
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.10
+  # Core numerical stack - PINNED FOR NUMPY COMPATIBILITY
+  - numpy=1.26.4
+  - scipy=1.11.4
+  - numba=0.58.1
+  - llvmlite=0.41.1
+  - scikit-learn=1.7.2
+
+  # Audio processing from conda-forge when possible
+  - librosa=0.10.1
+  - soundfile=0.12.1
+  - ffmpeg
+
+  # PyTorch from pytorch channel
+  - pytorch=2.8.0
+  - torchaudio=2.8.0
+  - pytorch-cuda=12.1  # Remove this line for CPU-only or macOS
+
+  # Data science essentials
+  - pandas=2.3.2
+  - matplotlib=3.10.6
+  - jupyter
+  - ipython
+
+  # Development tools
+  - pip
+  - git
+  - pre-commit
+
+  # Install remaining packages via pip
+  - pip:
+    # CRITICAL: PyAnnote packages must be exact versions to avoid numpy 2.x
+    - pyannote.audio==3.0.1
+    - pyannote.core==5.0.0
+    - pyannote.pipeline==3.0.1
+
+    # Audio processing not available in conda
+    - torchcrepe==0.0.20
+    - praat-parselmouth==0.4.3
+    - pydub==0.25.1
+    - audioread==3.0.1
+    - resampy==0.4.2
+    - soxr==1.0.0
+
+    # ML and speech processing
+    - transformers==4.31.0
+    - speechbrain==1.0.3
+    - huggingface-hub==0.35.0
+    - safetensors==0.3.1
+    - torchmetrics==1.8.2
+
+    # Web framework
+    - fastapi==0.100.0
+    - uvicorn==0.20.0
+    - python-multipart==0.0.6
+
+    # Utilities
+    - click==8.1.3
+    - loguru==0.7.3
+    - tqdm==4.67.1
+    - omegaconf==2.3.0
+    - PyYAML==6.0.2
+    - requests==2.32.5

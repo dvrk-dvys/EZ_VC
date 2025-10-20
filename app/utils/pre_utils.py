@@ -58,11 +58,11 @@ def gen_spkr_config(speaker_name, speech_encoder="hubertsoft", template_name="co
     return str(config_path)
 
 
-def convert_to_wav(input_path, output_path):
+def convert_to_wav(input_path, output_path, sr=44100):
     """
     Convert audio file to WAV format.
     """
-    audio, sr = librosa.load(input_path, sr=None)
+    audio, sr = librosa.load(input_path, sr=sr)
     sf.write(output_path, audio, sr)
 
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print("🧪 Testing config generator...")
 
     speaker = "nat_king_cole"
-    config_path = gen_spk_config(speaker)
+    config_path = gen_spkr_config(speaker)
 
     # Verify
     with open(config_path, "r") as f:

@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="1400" viewBox="0 0 1200 1400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      :root { --bg:#fafafa; --fg:#1a1a1a; --muted:#666; --box:#ffffff; --line:#3b82f6; --audio:#10b981; --ai:#8b5cf6; --data:#f59e0b; --docker:#0ea5e9; --warn:#ef4444; }
+      text{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:14px;fill:var(--fg)}
+      .title{font-weight:700;font-size:16px}
+      .subtitle{font-weight:600;font-size:12px;fill:var(--muted)}
+      .box{fill:var(--box); stroke:#e5e7eb; stroke-width:2; rx:16; ry:16; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.1))}
+      .arrow{fill:none; stroke:var(--line); stroke-width:3; marker-end:url(#arrowhead)}
+      .arrow.audio{stroke:var(--audio)}
+      .arrow.ai{stroke:var(--ai)}
+      .arrow.data{stroke:var(--data)}
+      .arrow.docker{stroke:var(--docker)}
+      .flow{
+        stroke-dasharray:8 8;
+        animation: dash 2s linear infinite;
+      }
+      @keyframes dash{ to{ stroke-dashoffset:-32; } }
+      .logo{font-size:18px;font-weight:800}
+      .tech-label{font-size:11px;fill:var(--muted);font-weight:500}
+      .phase-header{fill:#1f2937;font-weight:700;font-size:18px}
+    </style>
+    <marker id="arrowhead" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto-start-reverse">
+      <path d="M0,0 L12,6 L0,12 z" fill="currentColor"/>
+    </marker>
+    <linearGradient id="audioGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:0.2" />
+    </linearGradient>
+    <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:0.2" />
+    </linearGradient>
+    <linearGradient id="dataGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:0.2" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="100%" height="100%" fill="var(--bg)"/>
+
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" class="phase-header">EZ_RVC - Real-time Voice Conversion Architecture</text>
+
+  <!-- Phase 1: Data Input -->
+  <text x="60" y="90" class="phase-header">📁 Phase 1: Data Input</text>
+
+  <!-- Raw Audio Input -->
+  <g transform="translate(80,110)">
+    <rect class="box" width="300" height="80" fill="url(#audioGradient)"/>
+    <text x="150" y="30" text-anchor="middle" class="title">🎵 Raw Audio Sources</text>
+    <text x="150" y="50" text-anchor="middle" class="subtitle">YouTube, MP3, WAV, M4A</text>
+    <text x="150" y="65" text-anchor="middle" class="tech-label">FFmpeg • librosa • soundfile</text>
+  </g>
+
+  <!-- Data Structure -->
+  <g transform="translate(450,110)">
+    <rect class="box" width="280" height="80"/>
+    <text x="140" y="30" text-anchor="middle" class="title">📂 Data Structure</text>
+    <text x="140" y="50" text-anchor="middle" class="subtitle">data/raw/{speaker_name}/</text>
+    <text x="140" y="65" text-anchor="middle" class="tech-label">Organized by speaker ID</text>
+  </g>
+
+  <path class="arrow audio flow" d="M380,150 L450,150"/>
+
+  <!-- Phase 2: Preprocessing Pipeline -->
+  <text x="60" y="240" class="phase-header">⚙️ Phase 2: Preprocessing Pipeline</text>
+
+  <!-- Docker Environment -->
+  <g transform="translate(60,260)">
+    <rect class="box" width="1080" height="120" stroke="var(--docker)" stroke-width="3" fill="#f0f9ff"/>
+    <text x="20" y="25" class="title" fill="var(--docker)">🐳 Docker Environment</text>
+    <text x="20" y="40" class="tech-label">miniconda3 • Python 3.10 • CUDA Support</text>
+
+    <!-- Preprocessing Components -->
+    <g transform="translate(40,50)">
+      <!-- Audio Conversion -->
+      <rect class="box" width="180" height="60" fill="url(#audioGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">🔄 Format Convert</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">FFmpeg • Any→WAV</text>
+    </g>
+
+    <g transform="translate(250,50)">
+      <!-- Resampling -->
+      <rect class="box" width="180" height="60" fill="url(#audioGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">📊 Resample</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">44.1kHz • librosa</text>
+    </g>
+
+    <g transform="translate(460,50)">
+      <!-- Audio Slicer -->
+      <rect class="box" width="180" height="60" fill="url(#audioGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">✂️ Audio Slicer</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Silence detection</text>
+    </g>
+
+    <g transform="translate(670,50)">
+      <!-- Diarization (Optional) -->
+      <rect class="box" width="180" height="60" fill="url(#aiGradient)" stroke="var(--warn)" stroke-dasharray="5,5"/>
+      <text x="90" y="25" text-anchor="middle" class="title">👥 Diarization</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">pyannote.audio</text>
+    </g>
+
+    <g transform="translate(880,50)">
+      <!-- Output -->
+      <rect class="box" width="180" height="60" fill="url(#dataGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">💾 Clean WAV</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">data/44k/{speaker}/</text>
+    </g>
+
+    <!-- Flow arrows -->
+    <path class="arrow audio" d="M220,80 L250,80"/>
+    <path class="arrow audio" d="M430,80 L460,80"/>
+    <path class="arrow audio" d="M640,80 L670,80"/>
+    <path class="arrow data" d="M850,80 L880,80"/>
+  </g>
+
+  <!-- HuggingFace Authentication -->
+  <g transform="translate(800,110)">
+    <rect class="box" width="260" height="80" fill="#fff3cd" stroke="var(--warn)"/>
+    <text x="130" y="25" text-anchor="middle" class="title">🤗 HuggingFace Auth</text>
+    <text x="130" y="45" text-anchor="middle" class="subtitle">Token required for</text>
+    <text x="130" y="60" text-anchor="middle" class="tech-label">pyannote/speaker-diarization-3.1</text>
+  </g>
+
+  <!-- Phase 3: Feature Extraction -->
+  <text x="60" y="440" class="phase-header">🧠 Phase 3: Feature Extraction</text>
+
+  <!-- Feature Pipeline -->
+  <g transform="translate(80,460)">
+    <rect class="box" width="1040" height="140" fill="#f8fafc"/>
+    <text x="20" y="25" class="title">🎯 Feature Extraction Pipeline</text>
+
+    <!-- HuBERT/ContentVec -->
+    <g transform="translate(40,40)">
+      <rect class="box" width="200" height="80" fill="url(#aiGradient)"/>
+      <text x="100" y="30" text-anchor="middle" class="title">🎭 Content Features</text>
+      <text x="100" y="45" text-anchor="middle" class="subtitle">HuBERT/ContentVec</text>
+      <text x="100" y="65" text-anchor="middle" class="tech-label">768-dim embeddings</text>
+    </g>
+
+    <!-- F0 Extraction -->
+    <g transform="translate(270,40)">
+      <rect class="box" width="200" height="80" fill="url(#audioGradient)"/>
+      <text x="100" y="30" text-anchor="middle" class="title">🎵 Pitch (F0)</text>
+      <text x="100" y="45" text-anchor="middle" class="subtitle">CREPE/PyWorld</text>
+      <text x="100" y="65" text-anchor="middle" class="tech-label">Fundamental frequency</text>
+    </g>
+
+    <!-- Spectrogram -->
+    <g transform="translate(500,40)">
+      <rect class="box" width="200" height="80" fill="url(#dataGradient)"/>
+      <text x="100" y="30" text-anchor="middle" class="title">📈 Spectrogram</text>
+      <text x="100" y="45" text-anchor="middle" class="subtitle">Mel-scale</text>
+      <text x="100" y="65" text-anchor="middle" class="tech-label">Time-frequency repr.</text>
+    </g>
+
+    <!-- Volume & UV flags -->
+    <g transform="translate(730,40)">
+      <rect class="box" width="200" height="80" fill="url(#audioGradient)"/>
+      <text x="100" y="25" text-anchor="middle" class="title">🔊 Audio Meta</text>
+      <text x="100" y="40" text-anchor="middle" class="subtitle">Volume • UV flags</text>
+      <text x="100" y="55" text-anchor="middle" class="tech-label">Unvoiced detection</text>
+      <text x="100" y="70" text-anchor="middle" class="tech-label">RMS energy</text>
+    </g>
+
+    <!-- Flow arrows -->
+    <path class="arrow ai" d="M240,80 L270,80"/>
+    <path class="arrow audio" d="M470,80 L500,80"/>
+    <path class="arrow data" d="M700,80 L730,80"/>
+  </g>
+
+  <!-- Phase 4: Model Training -->
+  <text x="60" y="660" class="phase-header">🚀 Phase 4: Model Training</text>
+
+  <!-- Training Pipeline -->
+  <g transform="translate(80,680)">
+    <rect class="box" width="1040" height="160" fill="#f0f9ff"/>
+    <text x="20" y="25" class="title">🎯 So-VITS-SVC Training Pipeline</text>
+
+    <!-- Dataset Preparation -->
+    <g transform="translate(40,40)">
+      <rect class="box" width="220" height="100" fill="url(#dataGradient)"/>
+      <text x="110" y="25" text-anchor="middle" class="title">📊 Dataset Prep</text>
+      <text x="110" y="45" text-anchor="middle" class="subtitle">Train/Val Split</text>
+      <text x="110" y="60" text-anchor="middle" class="tech-label">File lists • Metadata</text>
+      <text x="110" y="80" text-anchor="middle" class="tech-label">Speaker configs</text>
+    </g>
+
+    <!-- Model Architecture -->
+    <g transform="translate(290,40)">
+      <rect class="box" width="220" height="100" fill="url(#aiGradient)"/>
+      <text x="110" y="25" text-anchor="middle" class="title">🧠 So-VITS-SVC</text>
+      <text x="110" y="40" text-anchor="middle" class="subtitle">Variational Autoencoder</text>
+      <text x="110" y="55" text-anchor="middle" class="tech-label">Content encoder</text>
+      <text x="110" y="70" text-anchor="middle" class="tech-label">Decoder • Discriminator</text>
+      <text x="110" y="85" text-anchor="middle" class="tech-label">PyTorch • Lightning</text>
+    </g>
+
+    <!-- Training Hardware -->
+    <g transform="translate(540,40)">
+      <rect class="box" width="220" height="100" fill="#fee2e2"/>
+      <text x="110" y="25" text-anchor="middle" class="title">⚡ Hardware</text>
+      <text x="110" y="45" text-anchor="middle" class="subtitle">CUDA • MPS</text>
+      <text x="110" y="60" text-anchor="middle" class="tech-label">GPU acceleration</text>
+      <text x="110" y="80" text-anchor="middle" class="tech-label">Apple Silicon support</text>
+    </g>
+
+    <!-- Model Output -->
+    <g transform="translate(790,40)">
+      <rect class="box" width="220" height="100" fill="url(#dataGradient)"/>
+      <text x="110" y="25" text-anchor="middle" class="title">💾 Model Weights</text>
+      <text x="110" y="45" text-anchor="middle" class="subtitle">Checkpoints</text>
+      <text x="110" y="60" text-anchor="middle" class="tech-label">.pth files</text>
+      <text x="110" y="80" text-anchor="middle" class="tech-label">Version control</text>
+    </g>
+
+    <!-- Flow arrows -->
+    <path class="arrow data" d="M260,90 L290,90"/>
+    <path class="arrow ai" d="M510,90 L540,90"/>
+    <path class="arrow data" d="M760,90 L790,90"/>
+  </g>
+
+  <!-- Phase 5: Real-time Inference -->
+  <text x="60" y="890" class="phase-header">🎙️ Phase 5: Real-time Inference</text>
+
+  <!-- Inference Pipeline -->
+  <g transform="translate(80,910)">
+    <rect class="box" width="1040" height="120" fill="#f0fdf4"/>
+    <text x="20" y="25" class="title">🚀 Real-time Voice Conversion</text>
+
+    <!-- Input Audio -->
+    <g transform="translate(40,40)">
+      <rect class="box" width="180" height="60" fill="url(#audioGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">🎤 Live Audio</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Microphone input</text>
+    </g>
+
+    <!-- Feature Extraction -->
+    <g transform="translate(250,40)">
+      <rect class="box" width="180" height="60" fill="url(#aiGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">⚡ Feature Ext.</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Real-time pipeline</text>
+    </g>
+
+    <!-- Model Inference -->
+    <g transform="translate(460,40)">
+      <rect class="box" width="180" height="60" fill="url(#aiGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">🧠 Inference</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Voice conversion</text>
+    </g>
+
+    <!-- Post-processing -->
+    <g transform="translate(670,40)">
+      <rect class="box" width="180" height="60" fill="url(#audioGradient)"/>
+      <text x="90" y="25" text-anchor="middle" class="title">🎛️ Post-process</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Audio enhancement</text>
+    </g>
+
+    <!-- Output -->
+    <g transform="translate(880,40)">
+      <rect class="box" width="160" height="60" fill="url(#audioGradient)"/>
+      <text x="80" y="25" text-anchor="middle" class="title">🔊 Output</text>
+      <text x="80" y="40" text-anchor="middle" class="tech-label">Converted voice</text>
+    </g>
+
+    <!-- Flow arrows -->
+    <path class="arrow audio flow" d="M220,70 L250,70"/>
+    <path class="arrow ai flow" d="M430,70 L460,70"/>
+    <path class="arrow ai flow" d="M640,70 L670,70"/>
+    <path class="arrow audio flow" d="M850,70 L880,70"/>
+  </g>
+
+  <!-- Phase 6: Deployment & API -->
+  <text x="60" y="1080" class="phase-header">🌐 Phase 6: Deployment & API</text>
+
+  <!-- API Layer -->
+  <g transform="translate(80,1100)">
+    <rect class="box" width="480" height="120" fill="#fef3c7"/>
+    <text x="20" y="25" class="title">🚀 FastAPI Server</text>
+
+    <g transform="translate(40,40)">
+      <rect class="box" width="180" height="60"/>
+      <text x="90" y="25" text-anchor="middle" class="title">🌐 REST API</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Upload • Convert</text>
+    </g>
+
+    <g transform="translate(250,40)">
+      <rect class="box" width="180" height="60"/>
+      <text x="90" y="25" text-anchor="middle" class="title">⚡ WebSocket</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Real-time streaming</text>
+    </g>
+  </g>
+
+  <!-- Web Interface -->
+  <g transform="translate(640,1100)">
+    <rect class="box" width="480" height="120" fill="#ddd6fe"/>
+    <text x="20" y="25" class="title">🖥️ Web Interface</text>
+
+    <g transform="translate(40,40)">
+      <rect class="box" width="180" height="60"/>
+      <text x="90" y="25" text-anchor="middle" class="title">⚛️ React UI</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Voice controls</text>
+    </g>
+
+    <g transform="translate(250,40)">
+      <rect class="box" width="180" height="60"/>
+      <text x="90" y="25" text-anchor="middle" class="title">🎛️ Controls</text>
+      <text x="90" y="40" text-anchor="middle" class="tech-label">Real-time params</text>
+    </g>
+  </g>
+
+  <!-- Final arrows -->
+  <path class="arrow flow" d="M320,1160 L640,1160"/>
+
+  <!-- Tech Stack Legend -->
+  <g transform="translate(80,1280)">
+    <rect class="box" width="1040" height="100"/>
+    <text x="20" y="25" class="title">🛠️ Technology Stack</text>
+
+    <text x="40" y="50" class="tech-label">• Audio Processing: librosa, soundfile, FFmpeg, PyWorld</text>
+    <text x="40" y="65" class="tech-label">• AI/ML: PyTorch, HuggingFace Transformers, pyannote.audio</text>
+    <text x="40" y="80" class="tech-label">• Infrastructure: Docker, FastAPI, React, CUDA/MPS</text>
+
+    <text x="600" y="50" class="tech-label">• Speech Encoders: HuBERT, ContentVec, Whisper</text>
+    <text x="600" y="65" class="tech-label">• Model Architecture: So-VITS-SVC, Variational Autoencoders</text>
+    <text x="600" y="80" class="tech-label">• Deployment: RESTful API, WebSocket streaming</text>
+  </g>
+
+</svg>

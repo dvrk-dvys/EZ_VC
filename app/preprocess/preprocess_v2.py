@@ -2,19 +2,27 @@ import argparse
 import os
 import re
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import librosa
 import numpy as np
 import soundfile
 import torch
-from pyannote.audio import Pipeline
+
+try:
+    from pyannote.audio import Pipeline  # optional
+
+    _HAS_PYANNOTE = True
+except Exception:
+    _HAS_PYANNOTE = False
+
+from dotenv import load_dotenv
 
 from app.utils.pre_utils import convert_to_wav, gen_spkr_config
 from app.utils.slicer import Slicer
 from app.utils.utils import get_device
 
-# import faiss
-
+load_dotenv()
 
 device = get_device()
 
@@ -64,12 +72,36 @@ class Preprocessor:
         self.slicer = Slicer(
             sr=target_sample_rate, threshold=-40, min_length=5000, min_interval=300, hop_size=10, max_sil_kept=500
         )
-        self.pyannote_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1")
+
+        # Diarization (lazy + safe)
+        self.pyannote_pipeline: Optional["Pipeline"] = None
+        self.diarize_ready = False
+        if self.enable_diarize:
+            hf_token = os.getenv("HUGGINGFACE_TOKEN")
+            if _HAS_PYANNOTE and hf_token:
+                try:
+                    # Keep pyannote on CPU. It's more stable and memory-friendly.
+                    self.pyannote_pipeline = Pipeline.from_pretrained(
+                        "pyannote/speaker-diarization-3.1", use_auth_token=hf_token
+                    )
+                    self.diarize_ready = True
+                    print("🔊 Diarization: ✅ ready (pyannote 3.1)")
+                except Exception as e:
+                    print(f"🔊 Diarization: ⚠️ disabled ({e})")
+            else:
+                missing = "pyannote" if not _HAS_PYANNOTE else "HF token"
+                print(f"🔊 Diarization: ⚠️ disabled (missing {missing})")
 
     def load_audio(self, audio_path):
-        """Load audio file"""
-        audio, sr = librosa.load(audio_path, sr=None, mono=True)
-        return audio, sr
+        """Load audio file (prefer soundfile, fallback to librosa)."""
+        try:
+            audio, sr = soundfile.read(audio_path, always_2d=False)
+            if audio.ndim > 1:
+                audio = np.mean(audio, axis=1)
+            return audio.astype(np.float32), sr
+        except Exception:
+            audio, sr = librosa.load(audio_path, sr=None, mono=True)
+            return audio.astype(np.float32), sr
 
     def slice(self, audio):  # , file_name, output_path):
         chunks = self.slicer.slice(audio)
@@ -99,22 +131,23 @@ class Preprocessor:
         # soundfile.write(output_path, audio, self.target_sample_rate)
         return audio.astype(np.float32), self.target_sample_rate
 
-    def diarize_speaker(self, waveform):  # , audio_path, output_path, speaker_id=0):
+    def diarize_speaker(self, waveform):
         """
         - Extract target speaker from multi-speaker audio
-        - Helper for pyannote with torch tensor fallback to temp file
+        - Helper for pyannote with CPU inference and file fallback
         """
-        # target_label = f"SPEAKER_{self.self.spkr:02d}"
+        if not self.diarize_ready or self.pyannote_pipeline is None:
+            return waveform  # graceful no-op
         if waveform.ndim > 1:
             waveform = librosa.to_mono(waveform)
         waveform = waveform.astype(np.float32)
 
         try:
-            wav_sample = {"waveform": torch.tensor(waveform).unsqueeze(0), "sample_rate": self.target_sample_rate}
-            diarization = self.pyannote_pipeline(wav_sample)
+            wav_sample = {"waveform": torch.tensor(waveform).unsqueeze(0).cpu(), "sample_rate": self.target_sample_rate}
+            diarization = self.pyannote_pipeline(wav_sample)  # pyannote expects CPU tensors
         except Exception:
             with NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
-                soundfile.write(tmp.name, waveform, self.target_sample_rate)
+                soundfile.write(tmp.name, waveform, self.target_sample_rate, subtype="PCM_16")
                 diarization = self.pyannote_pipeline(tmp.name)
 
         # choose dominant speaker by total speaking time
@@ -146,7 +179,7 @@ class Preprocessor:
                 if not file.endswith(".wav"):
                     original_path = os.path.join(root, file)
                     wav_path = original_path.rsplit(".", 1)[0] + ".wav"
-                    convert_to_wav(original_path, wav_path)
+                    convert_to_wav(original_path, wav_path, sr=self.target_sample_rate)
 
     def process_single_wav_file(self, file_path):
         """Process single wav file through the in-memory pipeline"""
@@ -164,11 +197,12 @@ class Preprocessor:
         # !to do: make a new directory if not already created with the same name as the speaker
         # !self.spkr
         out_repo = f"{self.output_path}/{self.spkr}/"
-        if not os.path.exists(out_repo):
-            os.makedirs(out_repo, exist_ok=False)
+        os.makedirs(out_repo, exist_ok=True)
 
         for i, chunk in enumerate(self.slice(waveform)):
-            soundfile.write(f"{out_repo}/{file_name}_{i}.wav", chunk, sr)
+            if chunk.size == 0:
+                continue
+            soundfile.write(f"{out_repo}/{file_name}_{i}.wav", chunk.astype(np.float32), sr, subtype="PCM_16")
 
     def process_raw_audio_dir(self, input_dir):
         """Main entry point - convert then process all wav files"""
@@ -283,9 +317,9 @@ if __name__ == "__main__":
     # fmt: off
     parser = argparse.ArgumentParser(description="EZ_RVC preprocessing")
     parser.add_argument("--output_path", type=str, default="./data/44k")
-    parser.add_argument("--enable_diarize", type=bool, default=True)
-    parser.add_argument("--raw_audios", type=str, default=raw_audio_dir, required=True, help="Path to raw audio files (directory or single file).")
-    parser.add_argument("--speaker_name", type=str, default=speaker, required=True, help="Speaker name identifier (e.g., 'nat_king_cole').")
+    parser.add_argument("--enable_diarize", type=bool, default=False)
+    parser.add_argument("--raw_audios", type=str, default=raw_audio_dir, help="Path to raw audio files (directory or single file).")
+    parser.add_argument("--speaker_name", type=str, default=speaker, help="Speaker name identifier (e.g., 'nat_king_cole').")
     parser.add_argument("--speech_encoder", type=str, default="hubertsoft",
                         choices=["hubertsoft", "vec768l12", "vec256l9", "whisper-ppg", "whisper-ppg-large", "cnhubertlarge", "dphubert", "wavlmbase+"], help="Speech encoder type.")
     parser.add_argument("--target_sample_rate", type=int, default=44100, help="Target sample rate for final WAV chunks (e.g., 44100).")
@@ -311,8 +345,7 @@ if __name__ == "__main__":
         hop_seconds=args.hop_seconds,
     )
 
-    #! smoke test
-    Pre.process_raw_audio_dir(input_dir=raw_audio_dir)
+    Pre.process_raw_audio_dir(input_dir=args.raw_audios)
 
     '''
       From your training code, the model expects these inputs:
