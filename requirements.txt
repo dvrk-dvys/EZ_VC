@@ -32,7 +32,7 @@ torchaudio==2.8.0
 torchmetrics==1.8.2
 
 # Machine learning and speech processing
-transformers==4.31.0
+transformers==4.53.0
 speechbrain==1.0.3
 huggingface-hub[cli]==0.35.0
 safetensors==0.3.1
