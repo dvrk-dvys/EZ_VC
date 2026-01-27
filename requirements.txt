@@ -52,7 +52,7 @@ PyYAML==6.0.2
 # Web framework
 fastapi==0.100.0
 uvicorn==0.20.0
-python-multipart==0.0.6
+python-multipart==0.0.22
 
 # Core utilities
 requests==2.32.5
