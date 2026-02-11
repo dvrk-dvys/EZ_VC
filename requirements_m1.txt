@@ -101,7 +101,7 @@ pykeops==2.1.1
 pypng==0.20220715.0
 python-dotenv==1.0.0
 python-editor==1.0.4
-python-multipart==0.0.6
+python-multipart==0.0.22
 pytorch-lightning==1.9.4
 pytorch-metric-learning==2.2.0
 pytz==2023.3
