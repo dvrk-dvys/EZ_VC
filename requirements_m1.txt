@@ -79,7 +79,7 @@ openai==0.27.2
 opt-einsum==3.3.0
 optuna==3.2.0
 ordered-set==4.1.0
-orjson==3.8.7
+orjson==3.11.5
 pandas==2.0.3
 pathtools==0.1.2
 pipreqs==0.4.13
